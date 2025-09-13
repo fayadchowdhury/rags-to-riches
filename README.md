@@ -1,0 +1,1 @@
+This is a **Retrieval-Augmented Generation (RAG)** system, leveraging an embedded, vectorized database of course materials to answer questions and generate sample questions. The system is specifically tailored to the content provided in **CMPT-713** and ensures precise and contextually relevant outputs.
