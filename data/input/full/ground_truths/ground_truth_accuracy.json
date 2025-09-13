@@ -1,0 +1,362 @@
+{
+    "Benchmarks": [
+      {
+        "type": "math",
+        "question": "Given a precision of 0.8 and recall of 0.6, compute the F1-score."
+      },
+      {
+        "type": "coding",
+        "question": "Write a Python function to calculate BLEU scores using NLTK for a set of candidate and reference sentences."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "What is the significance of benchmarks like GLUE and SuperGLUE in NLP?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Compare and contrast the evaluation metrics used for classification vs. generation tasks in NLP benchmarks."
+      }
+    ],
+    "Compression": [
+      {
+        "type": "math",
+        "question": "Derive the compression ratio given input size of 100MB and output size of 20MB."
+      },
+      {
+        "type": "coding",
+        "question": "Implement a basic gzip-based text compressor in Python."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "Why is model compression important for deploying NLP models on edge devices?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Explain different methods of model compression, such as pruning and quantization, and their trade-offs."
+      }
+    ],
+    "Cross-attention": [
+      {
+        "type": "math",
+        "question": "Compute the attention scores for query Q=[1,0], key K=[[1,1],[0,1]], and value V=[[1,2],[2,3]]."
+      },
+      {
+        "type": "coding",
+        "question": "Implement a cross-attention mechanism using PyTorch."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "What differentiates cross-attention from self-attention?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Describe the role of cross-attention in transformer models like T5 and its impact on multi-modal tasks."
+      }
+    ],
+    "Decoding": [
+      {
+        "type": "math",
+        "question": "Given logits [2.3, 0.8, 1.2], compute the probabilities using softmax."
+      },
+      {
+        "type": "coding",
+        "question": "Write a function to perform beam search decoding for a language model."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "What is the primary difference between greedy decoding and beam search?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Discuss how different decoding strategies (e.g., top-k sampling, nucleus sampling) impact the diversity and coherence of generated text."
+      }
+    ],
+    "Fast Attention": [
+      {
+        "type": "math",
+        "question": "Analyze the time complexity of standard attention vs. linear attention for sequence length N."
+      },
+      {
+        "type": "coding",
+        "question": "Implement a fast attention mechanism using the Performer approach in PyTorch."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "What makes fast attention methods like Linformer computationally efficient?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Explain the key differences and trade-offs between standard attention and efficient attention mechanisms like Reformer and Performer."
+      }
+    ],
+    "Few Shot Learners": [
+      {
+        "type": "math",
+        "question": "Explain the role of scaling laws in few-shot learning performance metrics."
+      },
+      {
+        "type": "coding",
+        "question": "Implement a prompt-based system in Python for a GPT model."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "What defines a few-shot learning setup?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Describe how few-shot learners use task-specific prompts to improve performance without retraining."
+      }
+    ],
+    "Feedforward Neural Networks": [
+      {
+        "type": "math",
+        "question": "Compute the number of parameters for a feedforward network with layers of size [256, 128, 64, 32]."
+      },
+      {
+        "type": "coding",
+        "question": "Implement a feedforward neural network for a binary classification task using PyTorch."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "Why are activation functions important in feedforward neural networks?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Explain the role of weight initialization in improving convergence in feedforward networks."
+      }
+    ],
+    "Instruct Tuning": [
+      {
+        "type": "math",
+        "question": "Model A achieves a 20% improvement in downstream task performance after instruct tuning. If baseline accuracy is 70%, what is the tuned accuracy?"
+      },
+      {
+        "type": "coding",
+        "question": "Write code to fine-tune a transformer model with instruction-based prompts."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "What is instruct tuning and how does it differ from fine-tuning?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Describe the process of instruct tuning and its impact on model generalization."
+      }
+    ],
+    "Intro to NLP and History": [
+      {
+        "type": "math",
+        "question": "Estimate the size of a unigram language model for a vocabulary of size 100,000 with floating-point probabilities."
+      },
+      {
+        "type": "coding",
+        "question": "Write a simple bigram language model implementation in Python."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "Why are statistical models less effective than neural models in modern NLP?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Discuss the evolution of NLP from rule-based systems to transformer-based models."
+      }
+    ],
+    "KNN LM": [
+      {
+        "type": "math",
+        "question": "Derive the time complexity of KNN retrieval for a dataset of size N and dimensionality D."
+      },
+      {
+        "type": "coding",
+        "question": "Implement a KNN-based language model that predicts the next word."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "What is the advantage of KNN LM over neural LMs?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Explain how KNN-based language models utilize memory for rare token prediction."
+      }
+    ],
+    "Linear Sequence Models": [
+      {
+        "type": "math",
+        "question": "For a sequence of length T, analyze the time complexity of a linear sequence model."
+      },
+      {
+        "type": "coding",
+        "question": "Write a Python implementation of a linear sequence model using PyTorch."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "How do linear sequence models differ from RNNs?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Describe the role of positional embeddings in linear sequence models."
+      }
+    ],
+    "Language Models": [
+      {
+        "type": "math",
+        "question": "Calculate perplexity for a given sequence if the model assigns probabilities {0.2, 0.3, 0.5}."
+      },
+      {
+        "type": "coding",
+        "question": "Implement a masked language model using PyTorch."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "What is the difference between autoregressive and masked language models?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Discuss the applications of language models in text generation and machine translation."
+      }
+    ],
+    "PEFT": [
+      {
+        "type": "math",
+        "question": "Estimate the parameter savings when fine-tuning only adapters instead of the full model."
+      },
+      {
+        "type": "coding",
+        "question": "Implement parameter-efficient fine-tuning (PEFT) using LoRA in PyTorch."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "Why is PEFT particularly useful for large language models?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Explain the concept of adapter layers and how they enable PEFT."
+      }
+    ],
+    "Pre-training Transformers": [
+      {
+        "type": "math",
+        "question": "Compute the time complexity of pre-training a transformer with 12 layers and 8 attention heads."
+      },
+      {
+        "type": "coding",
+        "question": "Write PyTorch code to pre-train a transformer on masked language modeling."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "Why is pre-training essential for transformer models?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Describe the differences between BERT-style pre-training and GPT-style pre-training."
+      }
+    ],
+    "Probability Recap for NLP": [
+      {
+        "type": "math",
+        "question": "Compute the joint probability of two events A and B given P(A)=0.5, P(B)=0.6, and P(A|B)=0.8."
+      },
+      {
+        "type": "coding",
+        "question": "Write Python code to estimate word probabilities using a unigram language model."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "What is the role of conditional probabilities in language modeling?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Explain the concept of mutual information and its relevance to NLP."
+      }
+    ],
+    "Scaling Laws for LLMs": [
+      {
+        "type": "math",
+        "question": "Derive the relationship between model size, dataset size, and performance as per Kaplan et al."
+      },
+      {
+        "type": "coding",
+        "question": "Write a simulation in Python to explore the impact of dataset size on loss for a simple neural network."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "What are the key takeaways from scaling laws for LLMs?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Discuss how scaling laws impact the design of state-of-the-art language models."
+      }
+    ],
+    "Self-Attention": [
+      {
+        "type": "math",
+        "question": "Compute attention scores for Q=[[1,0]], K=[[0,1],[1,1]], V=[[1,2],[3,4]]."
+      },
+      {
+        "type": "coding",
+        "question": "Implement scaled dot-product attention in PyTorch."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "Why is scaling necessary in self-attention mechanisms?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Describe the role of self-attention in enabling parallelism in transformers."
+      }
+    ],
+    "Tokenization": [
+      {
+        "type": "math",
+        "question": "Analyze the impact of subword tokenization on vocabulary size and model size."
+      },
+      {
+        "type": "coding",
+        "question": "Write Python code to train a Byte Pair Encoding (BPE) tokenizer on a text dataset."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "Why is subword tokenization preferred over word-level tokenization in modern NLP?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Explain how tokenization impacts the performance and generalization of NLP models."
+      }
+    ],
+    "VAEs": [
+      {
+        "type": "math",
+        "question": "Derive the ELBO for a variational autoencoder given p(x), q(z|x), and p(z|x)."
+      },
+      {
+        "type": "coding",
+        "question": "Implement the encoder of a VAE in PyTorch."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "What is the role of the KL divergence term in VAE optimization?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Describe the applications of VAEs in text generation and representation learning."
+      }
+    ],
+    "Word Vectors": [
+      {
+        "type": "math",
+        "question": "Compute cosine similarity between two word vectors u=[1,2,3] and v=[3,2,1]."
+      },
+      {
+        "type": "coding",
+        "question": "Write Python code to train Word2Vec embeddings using Gensim."
+      },
+      {
+        "type": "short_theoretical",
+        "question": "What is the primary limitation of static word embeddings like Word2Vec?"
+      },
+      {
+        "type": "descriptive",
+        "question": "Discuss the transition from static word embeddings to contextualized embeddings."
+      }
+    ]
+}  
