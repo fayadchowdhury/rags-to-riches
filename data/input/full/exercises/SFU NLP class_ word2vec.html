@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/x-icon" href="/nlp-classfavicon.ico">
+    <title>SFU NLP class: word2vec</title>
+
+    <!-- CSS -->
+    <link href="/nlp-class/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/nlp-class/dist/css/bootstrap-glyphicons.css" rel="stylesheet">
+    <link href="/nlp-class/assets/css/nlp-class.css" rel="stylesheet">   
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+
+    <!-- MathJax
+    <script type="text/javascript" async
+      src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML">
+    </script>
+    -->
+    <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    TeX: {
+      equationNumbers: {
+        autoNumber: "AMS"
+      }
+    },
+    tex2jax: {
+      inlineMath: [ ['$','$'], ['\\(', '\\)'] ],
+      displayMath: [ ['$$','$$'], ['\\[', '\\]'] ],
+      processEscapes: true,
+    }
+  });
+</script>
+<script type="text/javascript"
+	src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+  </head>
+  <body>
+    <a class="sr-only" href="#content">Skip to main content</a>
+
+    <!-- Docs master nav -->
+    <header class="navbar navbar-fixed-top navbar-default" role="banner">
+      <div class="container">
+        <div class="row">
+        <div class="navbar-header">
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <ul class="nav navbar-nav">
+            <li id="main_page"><a href="/nlp-class/index.html" class="navbar-brand">Natural Language Processing</a></li>
+          </ul>
+        </div>
+        <nav class="collapse navbar-collapse" role="navigation">
+          <ul class="nav navbar-nav">
+            <li id="syllabus"><a href="/nlp-class/syllabus.html">Syllabus</a></li>
+            <li id="homework">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#">Homework <span class="caret"></span></a>
+              <ol class="dropdown-menu">
+                <li><a href="/nlp-class/hw0.html">0. Setup</a></li>
+                <li><a href="/nlp-class/hw1.html">1. Word Vectors</a></li>
+                <li><a href="/nlp-class/hw2.html">2. BERT Finetuning</a></li>
+                <li><a href="/nlp-class/hw3.html">3. Prompt Tuning for Text Generation</a></li>
+                <li><a href="/nlp-class/hw4.html">4. Preference Optimization</a></li>
+              </ol>
+            </li>
+            <li id="project"><a href="project.html">Project</a></li>
+            <li id="faq"><a href="/nlp-class/faq.html">FAQ</a></li>
+          </ul>
+        </nav>
+      </div>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-2 hidden-sm hidden-xs">
+        
+        </div>
+        <div class="col-sm-10">
+          <h2 id="word2vec-practice">Word2Vec Practice</h2>
+
+<h3 id="question-1">Question 1</h3>
+
+<p>Suppose a classifier predicts each possible class with equal
+probability. If there are a 100 classes what will be the cross
+entropy error on a single example?</p>
+
+<table class="table">
+  <tbody>
+    <tr>
+      <td>1.</td>
+      <td>-log(100)</td>
+    </tr>
+    <tr>
+      <td>2.</td>
+      <td>-log(0.01)</td>
+    </tr>
+    <tr>
+      <td>3.</td>
+      <td>-log(0.1)</td>
+    </tr>
+    <tr>
+      <td>4.</td>
+      <td>-0.01 log(1)</td>
+    </tr>
+    <tr>
+      <td>5.</td>
+      <td>-100 log(0.01)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="question-2">Question 2</h3>
+
+<p>Alice and Bob have each used the word2vec algorithm (either
+skip-gram or CBOW) for the same vocabulary $V$.</p>
+
+<p>Alice obtained “context” vectors $v_w^A$ and “center” or “target” vectors $u_w^A$ for each $w \in V$.
+Similarly, Bob obtained “context” vectors $v_w^B$ and “center” vectors $u_w^B$ for each $w \in V$.</p>
+
+<p>Suppose that for every pair of words $w, w’ \in V$ the inner product or dot product is the 
+same in both models:</p>
+
+\[u_w^A \cdot v_w^A = u_w^B \cdot v_w^B\]
+
+<p>Does it follow that for every $w \in V$ that $v_w^A = v_w^B$? Why or why not?</p>
+
+<h3 id="question-3">Question 3</h3>
+
+<p>For the continuous bag of words (CBOW) model of word2vec we use the average of
+the context vectors for window size $m$:</p>
+
+\[\hat{v} = \frac{1}{2m} (v_{i-m} + \ldots + v_{i-1} + v_{i+1} + \ldots + v_{i+m})\]
+
+<p>Each $v_j$ is a word vector of dimension $k$. CBOW uses the following classifier to predict the “center” word:</p>
+
+\[\hat{y} = \textrm{softmax}( U \cdot \hat{v} )\]
+
+<ol>
+  <li>Write down the dimension of the $\hat{y}$ vector.</li>
+  <li>Write down the value of $\sum_i \hat{y}_i$</li>
+  <li>Write down the definition of matrix $U$ in terms of the parameters $u_w$ for each $w \in V$.</li>
+  <li>Write down the dimensions of matrix $U$.</li>
+  <li>Briefly explain why we cannot use negative sampling (without modification) to train this model.</li>
+</ol>
+
+<h3 id="question-4">Question 4</h3>
+
+<p>The sigmoid function maps input values into $[0,1]$.</p>
+
+\[\sigma(z) = \frac{1}{1 + exp(-z)}\]
+
+<p>We can define a two class classifier using the sigmoid:</p>
+
+\[P(Y=1 \mid x) = \sigma(\beta x)\]
+
+\[P(Y=2 \mid x) = 1 - P(Y=1 \mid x)\]
+
+<p>Instead of two classes assume we have $k$ output labels, $Y = 1, \ldots k$
+We can use the softmax function for this:</p>
+
+\[P(Y=i \mid x) = \frac{exp(\beta_i x)}{\sum_j exp(\beta_j x)}\]
+
+<p>Show that for $k=2$ these two definitions: the softmax and the sigmoid
+are equivalent with $\beta$ in the sigmoid function being equal to $(\beta_1 - \beta_2)$
+in the softmax function over two classes $Y=1,2$.</p>
+
+<h3 id="question-5">Question 5</h3>
+
+<p>Let us assume we have an English dataset of sentences:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>We have all seen how President Obama has made research and development a key plank of his stimulus package. 
+If you're a pirate fan, it's time to make those pitiful black-clad landlubbers walk the plank. 
+...
+</code></pre></div></div>
+
+<p>And a French dataset of sentences:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Nous avons tous vu comment le président Obama a fait de la recherche et du développement un des piliers de ses mesures de relance.
+Si vous avez l'âme d'un pirate, vous vous ferez un plaisir de pousser ces gars en pyjama noir sur la planche.  
+...
+</code></pre></div></div>
+
+<p>The English and French sentences are not necessarily translations of each other. Also assume we have
+a bilingual dictionary <em>Trans</em> that provides pairs of words in English and French which are translations 
+of each other:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>plank, piliers
+plank, planche
+</code></pre></div></div>
+
+<p>Assume you have been given a word2vec model for English $\hat{Q}^E$ with
+parameters $v_i^E$ and $u_i^E$ for each English word $w_i \in {\cal
+V}_E$ where ${\cal V}_E$ is the English vocabulary. Similarly we
+have a word2vec model for French $\hat{Q}^F$ with parameters $v_j^F$ and $u_j^F$
+for each French word $w_j \in {\cal V}_F$ where ${\cal V}_F$ is the
+French vocabulary.</p>
+
+<p>The retrofitting objective for matrix $Q$ and $\hat{Q}$ is
+given by the following objective function $L(Q)$ where there is some semantic
+relation edge ${\cal E}$ between words $w_i$ and $w_j$. We wish to find a matrix
+$Q = (q_1, \ldots, q_n)$ such that the
+columns of the matrix $Q$ are close (in vector space) to the word vectors in $\hat{Q} = (\hat{q}_1, \ldots, \hat{q}_n)$
+(so $q_i$ is close to $\hat{q}_i$) and at the same time the columns
+of the matrix $Q$ are close (in vector space) to the word vectors
+of other words connected via an edge ${\cal E}$. So if $(w_i, w_j)$
+are connected by an edge then we want $q_i$ and $q_j$ to be close in vector space.</p>
+
+\[L(Q) = \sum_{i=1}^n \left[ \alpha_i || q_i - \hat{q}_i ||^2 + \sum_{(i,j) \in {\cal E}} \beta_{ij} || q_i - q_j ||^2 \right]\]
+
+<ol>
+  <li>Provide a new retrofitting objective function $L_E(Q_E)$ by using the word2vec models for English and French. The objective function $L_E(Q_E)$ should ensure that 
+English words that were close in vector space in $Q_E$ remain close but are also close in vector space to their translation pairs in the bilingual dictionary. For example,
+if English words <code class="language-plaintext highlighter-rouge">plank</code> and <code class="language-plaintext highlighter-rouge">deal</code> were close in vector space in $\hat{Q}_E$ they should remain close in $Q_E$, and at the same time
+if <code class="language-plaintext highlighter-rouge">plank</code> was listed as a translation pair with <code class="language-plaintext highlighter-rouge">piliers</code> then their respective word vectors should be close in vector space as well.</li>
+  <li>Provide the initialization step for $Q_E$.</li>
+  <li>Provide a similar retrofitting objective function and initialization step for French $L_F(Q_F)$.</li>
+</ol>
+
+<h3 id="acknowledgements">Acknowledgements</h3>
+
+<p>The first few questions here are modified versions of questions from the Stanford University course cs224n.</p>
+
+
+        </div>
+      </div>
+
+      <footer class="text-center text-muted">
+        <hr/>
+        Last updated November 29, 2024.<br/>
+        Forked from the JHU MT class code on <a href="https://github.com/mt-class/jhu">github <i class="fa fa-github-alt"></i></a> by <a href="https://github.com/mjpost">Matt Post</a> and <a href="https://github.com/alopez">Adam Lopez</a>.<br/>
+        <br/><br/>
+      </footer>
+    </div>
+
+    <!-- Page content of course! -->
+    <!-- JS and analytics only. -->
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/nlp-class/dist/js/bootstrap.js"></script>
+    <script type="text/javascript">
+      $(document).ready(function(){
+        $("#syllabus").addClass("active");
+      });
+    </script>
+  </body>
+</html>

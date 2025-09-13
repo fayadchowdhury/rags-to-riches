@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <!-- apple-touch-icon? -->
+  <meta name=viewport content='width=device-width, initial-scale=1'>
+        <title>PyTorch internals :  ezyang’s blog</title>
+
+  <link rel="stylesheet" href="http://blog.ezyang.com/wp-content/themes/Ashley/style.css" type="text/css" media="screen" charset="utf-8" />
+  <link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+  <link href='http://fonts.googleapis.com/css?family=Ubuntu+Mono' rel='stylesheet' type='text/css'>
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+  <link rel="alternate" type="application/rss+xml" title="ezyang’s blog RSS Feed" href="http://blog.ezyang.com/feed/" />
+  <link rel="alternate" type="application/atom+xml" title="ezyang’s blog Atom Feed" href="http://blog.ezyang.com/feed/atom/" />
+
+  <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?lang=hs"></script>
+  <script src="http://blog.ezyang.com/wp-content/lang-coq.js"></script>
+  <link rel="pingback" href="http://blog.ezyang.com/xmlrpc.php" />
+    <link rel='dns-prefetch' href='//s.w.org' />
+<link rel="alternate" type="application/rss+xml" title="ezyang’s blog &raquo; PyTorch internals Comments Feed" href="http://blog.ezyang.com/2019/05/pytorch-internals/feed/" />
+		<script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/11.2.0\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/11.2.0\/svg\/","svgExt":".svg","source":{"concatemoji":"http:\/\/blog.ezyang.com\/wp-includes\/js\/wp-emoji-release.min.js?ver=5.1.19"}};
+			!function(e,a,t){var n,r,o,i=a.createElement("canvas"),p=i.getContext&&i.getContext("2d");function s(e,t){var a=String.fromCharCode;p.clearRect(0,0,i.width,i.height),p.fillText(a.apply(this,e),0,0);e=i.toDataURL();return p.clearRect(0,0,i.width,i.height),p.fillText(a.apply(this,t),0,0),e===i.toDataURL()}function c(e){var t=a.createElement("script");t.src=e,t.defer=t.type="text/javascript",a.getElementsByTagName("head")[0].appendChild(t)}for(o=Array("flag","emoji"),t.supports={everything:!0,everythingExceptFlag:!0},r=0;r<o.length;r++)t.supports[o[r]]=function(e){if(!p||!p.fillText)return!1;switch(p.textBaseline="top",p.font="600 32px Arial",e){case"flag":return s([55356,56826,55356,56819],[55356,56826,8203,55356,56819])?!1:!s([55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447],[55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447]);case"emoji":return!s([55358,56760,9792,65039],[55358,56760,8203,9792,65039])}return!1}(o[r]),t.supports.everything=t.supports.everything&&t.supports[o[r]],"flag"!==o[r]&&(t.supports.everythingExceptFlag=t.supports.everythingExceptFlag&&t.supports[o[r]]);t.supports.everythingExceptFlag=t.supports.everythingExceptFlag&&!t.supports.flag,t.DOMReady=!1,t.readyCallback=function(){t.DOMReady=!0},t.supports.everything||(n=function(){t.readyCallback()},a.addEventListener?(a.addEventListener("DOMContentLoaded",n,!1),e.addEventListener("load",n,!1)):(e.attachEvent("onload",n),a.attachEvent("onreadystatechange",function(){"complete"===a.readyState&&t.readyCallback()})),(n=t.source||{}).concatemoji?c(n.concatemoji):n.wpemoji&&n.twemoji&&(c(n.twemoji),c(n.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script>
+		<style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style>
+	<link rel='stylesheet' id='wp-block-library-css'  href='http://blog.ezyang.com/wp-includes/css/dist/block-library/style.min.css?ver=5.1.19' type='text/css' media='all' />
+<script type='text/javascript' src='http://blog.ezyang.com/wp-includes/js/jquery/jquery.js?ver=1.12.4'></script>
+<script type='text/javascript' src='http://blog.ezyang.com/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.4.1'></script>
+<script type='text/javascript' src='http://blog.ezyang.com/wp-content/plugins/google-analyticator/external-tracking.min.js?ver=6.5.0'></script>
+<link rel='https://api.w.org/' href='http://blog.ezyang.com/wp-json/' />
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://blog.ezyang.com/xmlrpc.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://blog.ezyang.com/wp-includes/wlwmanifest.xml" /> 
+<link rel='prev' title='A short note about functional linear maps' href='http://blog.ezyang.com/2019/05/a-short-note-about-functional-linear-maps/' />
+<link rel='next' title='vmap in Haskell' href='http://blog.ezyang.com/2020/01/vmap-in-haskell/' />
+<meta name="generator" content="WordPress 5.1.19" />
+<link rel="canonical" href="http://blog.ezyang.com/2019/05/pytorch-internals/" />
+<link rel='shortlink' href='http://blog.ezyang.com/?p=10160' />
+<link rel="alternate" type="application/json+oembed" href="http://blog.ezyang.com/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fblog.ezyang.com%2F2019%2F05%2Fpytorch-internals%2F" />
+<link rel="alternate" type="text/xml+oembed" href="http://blog.ezyang.com/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fblog.ezyang.com%2F2019%2F05%2Fpytorch-internals%2F&#038;format=xml" />
+<style type="text/css">
+/* <![CDATA[ */
+img.latex { vertical-align: middle; border: none; }
+/* ]]> */
+</style>
+<!-- Google Analytics Tracking by Google Analyticator 6.5.0: http://www.videousermanuals.com/google-analyticator/ -->
+<script type="text/javascript">
+    var analyticsFileTypes = [''];
+    var analyticsSnippet = 'enabled';
+    var analyticsEventTracking = 'enabled';
+</script>
+<script type="text/javascript">
+	var _gaq = _gaq || [];
+  
+	_gaq.push(['_setAccount', 'UA-12247861-1']);
+    _gaq.push(['_addDevId', 'i9k95']); // Google Analyticator App ID with Google
+	_gaq.push(['_trackPageview']);
+
+	(function() {
+		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		                ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	})();
+</script>
+</head>
+
+<body class="post-template-default single single-post postid-10160 single-format-standard">
+
+<header>
+  <h1 class="vcard author"><a href="http://blog.ezyang.com/" title="Home">ezyang’s blog</a></h1>
+  <p>
+    the arc of software bends towards understanding    <ul class="pages">
+      <li class="page_item page-item-2"><a href="http://blog.ezyang.com/about/">About</a></li>
+<li class="page_item page-item-21"><a href="http://blog.ezyang.com/archives/">Archives</a></li>
+      <li><a href="http://blog.ezyang.com/feed/">Subscribe</a></li>
+    </ul>
+  </p>
+</header>
+
+<div class="content wrap">
+<section class="posts">
+      <article class="post">
+      <h2>PyTorch internals</h2>
+      <!--<h4 class="vcard author">by <span class="fn">Edward Z. Yang</span></h4>-->
+      
+<div class="document">
+
+
+<!-- -*- mode: rst -*- -->
+<p>This post is a long form essay version of a talk about PyTorch internals, that I gave at the PyTorch NYC meetup on May 14, 2019.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-01.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-01.png" /></div></div>
+<p>Hi everyone!  Today I want to talk about the internals of <a class="reference external" href="https://pytorch.org/">PyTorch</a>.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-02.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-02.png" /></div></div>
+<p>This talk is for those of you who have used PyTorch, and thought to yourself, &quot;It would be great if I could contribute to PyTorch,&quot; but were scared by PyTorch's behemoth of a C++ codebase.  I'm not going to lie: the PyTorch codebase can be a bit overwhelming at times. The purpose of this talk is to put a map in your hands: to tell you about the basic conceptual structure of a &quot;tensor library that supports automatic differentiation&quot;, and give you some tools and tricks for finding your way around the codebase.  I'm going to assume that you've written some PyTorch before, but haven't necessarily delved deeper into how a machine learning library is written.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-03.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-03.png" /></div></div>
+<p>The talk is in two parts: in the first part, I'm going to first introduce you to the conceptual universe of a tensor library.  I'll start by talking about the tensor data type you know and love, and give a more detailed discussion about what exactly this data type provides, which will lead us to a better understanding of how it is actually implemented under the hood.  If you're an advanced user of PyTorch, you'll be familiar with most of this material.  We'll also talk about the trinity of &quot;extension points&quot;, layout, device and dtype, which guide how we think about extensions to the tensor class.  In the live talk at PyTorch NYC, I skipped the slides about autograd, but I'll talk a little bit about them in these notes as well.</p>
+<p>The second part grapples with the actual nitty gritty details involved with actually coding in PyTorch.  I'll tell you how to cut your way through swaths of autograd code, what code actually matters and what is legacy, and also all of the cool tools that PyTorch gives you for writing kernels.</p>
+<hr class="docutils" />
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-04.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-04.png" /></div></div>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-05.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-05.png" /></div></div>
+<p>The tensor is the central data structure in PyTorch.  You probably have a pretty good idea about what a tensor intuitively represents: its an n-dimensional data structure containing some sort of scalar type, e.g., floats, ints, et cetera.  We can think of a tensor as consisting of some data, and then some metadata describing the size of the tensor, the type of the elements in contains (dtype), what device the tensor lives on (CPU memory? CUDA memory?)</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-06.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-06.png" /></div></div>
+<p>There's also a little piece of metadata you might be less familiar with: the stride.  Strides are actually one of the distinctive features of PyTorch, so it's worth discussing them a little more.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-07.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-07.png" /></div></div>
+<p>A tensor is a mathematical concept.  But to represent it on our computers, we have to define some sort of physical representation for them.  The most common representation is to lay out each element of the tensor contiguously in memory (that's where the term contiguous comes from), writing out each row to memory, as you see above. In the example above, I've specified that the tensor contains 32-bit integers, so you can see that each integer lies in a physical address, each offset four bytes from each other.  To remember what the actual dimensions of the tensor are, we have to also record what the sizes are as extra metadata.</p>
+<p>So, what do strides have to do with this picture?</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-08.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-08.png" /></div></div>
+<p>Suppose that I want to access the element at position <tt class="docutils literal">tensor[1, 0]</tt> in my logical representation.  How do I translate this logical position into a location in physical memory?  Strides tell me how to do this: to find out where any element for a tensor lives, I multiply each index with the respective stride for that dimension, and sum them all together.  In the picture above, I've color coded the first dimension blue and the second dimension red, so you can follow the index and stride in the stride calculation.  Doing this sum, I get two (zero-indexed), and indeed, the number three lives two below the beginning of the contiguous array.</p>
+<p>(Later in the talk, I'll talk about TensorAccessor, a convenience class that handles the indexing calculation.  When you use TensorAccessor, rather than raw pointers, this calculation is handled under the covers for you.)</p>
+<p>Strides are the fundamental basis of how we provide views to PyTorch users.  For example, suppose that I want to extract out a tensor that represents the second row of the tensor above:</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-09.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-09.png" /></div></div>
+<p>Using advanced indexing support, I can just write <tt class="docutils literal">tensor[1, :]</tt> to get this row.  Here's the important thing: when I do this, I don't create a new tensor; instead, I just return a tensor which is a different view on the underlying data.  This means that if I, for example, edit the data in that view, it will be reflected in the original tensor.  In this case, it's not too hard to see how to do this: three and four live in contiguous memory, and all we need to do is record an offset saying that the data of this (logical) tensor lives two down from the top.  (Every tensor records an offset, but most of the time it's zero, and I'll omit it from my diagrams when that's the case.)</p>
+<!--  -->
+<blockquote>
+<p>Question from the talk: If I take a view on a tensor, how do I free the memory of the underlying tensor?</p>
+<p>Answer: You have to make a copy of the view, thus disconnecting it from the original physical memory.  There's really not much else you can do.  By the way, if you have written Java in the old days, taking substrings of strings has a similar problem, because by default no copy is made, so the substring retains the (possibly very large string). Apparently, they <a class="reference external" href="https://stackoverflow.com/questions/14161050/java-string-substring-method-potential-memory-leak">fixed this in Java 7u6</a>.</p>
+</blockquote>
+<p>A more interesting case is if I want to take the first column:</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-10.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-10.png" /></div></div>
+<p>When we look at the physical memory, we see that the elements of the column are not contiguous: there's a gap of one element between each one.  Here, strides come to the rescue: instead of specifying a stride of one, we specify a stride of two, saying that between one element and the next, you need to jump two slots.  (By the way, this is why it's called a &quot;stride&quot;: if we think of an index as walking across the layout, the stride says how many locations we stride forward every time we take a step.)</p>
+<p>The stride representation can actually let you represent all sorts of interesting views on tensors; if you want to play around with the possibilities, check out the <a class="reference external" href="https://ezyang.github.io/stride-visualizer/index.html">Stride Visualizer</a>.</p>
+<p>Let's step back for a moment, and think about how we would actually implement this functionality (after all, this is an internals talk.)  If we can have views on tensor, this means we have to decouple the notion of the tensor (the user-visible concept that you know and love), and the actual physical data that stores the data of the tensor (called storage):</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-11.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-11.png" /></div></div>
+<p>There may be multiple tensors which share the same storage.  Storage defines the dtype and physical size of the tensor, while each tensor records the sizes, strides and offset, defining the logical interpretation of the physical memory.</p>
+<p>One thing to realize is that there is always a pair of Tensor-Storage, even for &quot;simple&quot; cases where you don't really need a storage (e.g., you just allocated a contiguous tensor with <tt class="docutils literal">torch.zeros(2, 2)</tt>).</p>
+<!--  -->
+<blockquote>
+By the way, we're interested in making this picture not true; instead of having a separate concept of storage, just define a view to be a tensor that is backed by a base tensor.  This is a little more complicated, but it has the benefit that contiguous tensors get a much more direct representation without the Storage indirection.  A change like this would make PyTorch's internal representation a bit more like Numpy's.</blockquote>
+<hr class="docutils" />
+<p>We've talked quite a bit about the data layout of tensor (some might say, if you get the data representation right, everything else falls in place).  But it's also worth briefly talking about how operations on the tensor are implemented.  At the very most abstract level, when you call <tt class="docutils literal">torch.mm</tt>, two dispatches happen:</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-12.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-12.png" /></div></div>
+<p>The first dispatch is based on the device type and layout of a tensor: e.g., whether or not it is a CPU tensor or a CUDA tensor (and also, e.g., whether or not it is a strided tensor or a sparse one).  This is a dynamic dispatch: it's a virtual function call (exactly where that virtual function call occurs will be the subject of the second half of this talk).  It should make sense that you need to do a dispatch here: the implementation of CPU matrix multiply is quite different from a CUDA implementation.  It is a <em>dynamic</em> dispatch because these kernels may live in separate libraries (e.g., <tt class="docutils literal">libcaffe2.so</tt> versus <tt class="docutils literal">libcaffe2_gpu.so</tt>), and so you have no choice: if you want to get into a library that you don't have a direct dependency on, you have to dynamic dispatch your way there.</p>
+<p>The second dispatch is a dispatch on the dtype in question.  This dispatch is just a simple switch-statement for whatever dtypes a kernel chooses to support.  Upon reflection, it should also make sense that we need to a dispatch here: the CPU code (or CUDA code, as it may) that implements multiplication on <tt class="docutils literal">float</tt> is different from the code for <tt class="docutils literal">int</tt>.  It stands to reason you need separate kernels for each dtype.</p>
+<p>This is probably the most important mental picture to have in your head, if you're trying to understand the way operators in PyTorch are invoked.  We'll return to this picture when it's time to look more at code.</p>
+<hr class="docutils" />
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-13.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-13.png" /></div></div>
+<p>Since we have been talking about Tensor, I also want to take a little time to the world of tensor extensions.  After all, there's more to life than dense, CPU float tensors.  There's all sorts of interesting extensions going on, like XLA tensors, or quantized tensors, or MKL-DNN tensors, and one of the things we have to think about, as a tensor library, is how to accommodate these extensions.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-14.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-14.png" /></div></div>
+<p>Our current model for extensions offers four extension points on tensors.  First, there is the trinity three parameters which uniquely determine what a tensor is:</p>
+<ul class="simple">
+<li>The <strong>device</strong>, the description of where the tensor's physical memory is actually stored, e.g., on a CPU, on an NVIDIA GPU (cuda), or perhaps on an AMD GPU (hip) or a TPU (xla).  The distinguishing characteristic of a device is that it has its own allocator, that doesn't work with any other device.</li>
+<li>The <strong>layout</strong>, which describes how we logically interpret this physical memory.  The most common layout is a strided tensor, but sparse tensors have a different layout involving a pair of tensors, one for indices, and one for data; MKL-DNN tensors may have even more exotic layout, like blocked layout, which can't be represented using merely strides.</li>
+<li>The <strong>dtype</strong>, which describes what it is that is actually stored in each element of the tensor.  This could be floats or integers, or it could be, for example, quantized integers.</li>
+</ul>
+<p>If you want to add an extension to PyTorch tensors (by the way, if that's what you want to do, please talk to us!  None of these things can be done out-of-tree at the moment), you should think about which of these parameters you would extend.  The Cartesian product of these parameters define all of the possible tensors you can make.  Now, not all of these combinations may actually have kernels (who's got kernels for sparse, quantized tensors on FPGA?) but in <em>principle</em> the combination could make sense, and thus we support expressing it, at the very least.</p>
+<p>There's one last way you can make an &quot;extension&quot; to Tensor functionality, and that's write a wrapper class around PyTorch tensors that implements your object type.  This perhaps sounds obvious, but sometimes people reach for extending one of the three parameters when they should have just made a wrapper class instead.  One notable merit of wrapper classes is they can be developed entirely out of tree.</p>
+<p>When should you write a tensor wrapper, versus extending PyTorch itself?  The key test is whether or not you need to pass this tensor along during the autograd backwards pass.  This test, for example, tells us that sparse tensor should be a true tensor extension, and not just a Python object that contains an indices and values tensor: when doing optimization on networks involving embeddings, we want the gradient generated by the embedding to be sparse.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-15.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-15.png" /></div></div>
+<p>Our philosophy on extensions also has an impact of the data layout of tensor itself.  One thing we really want out of our tensor struct is for it to have a fixed layout: we don't want fundamental (and very frequently called) operations like &quot;What's the size of a tensor?&quot; to require virtual dispatches.  So when you look at the actual layout of a Tensor (defined in the <a class="reference external" href="https://github.com/pytorch/pytorch/blob/master/c10/core/TensorImpl.h">TensorImpl struct</a>),  what we see is a common prefix of all fields that we consider all &quot;tensor&quot;-like things to universally have, plus a few fields that are only really applicable for strided tensors, but are <em>so</em> important that we've kept them in the main struct, and then a suffix of custom fields that can be done on a per-Tensor basis.  Sparse tensors, for example, store their indices and values in this suffix.</p>
+<hr class="docutils" />
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-16.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-16.png" /></div></div>
+<p>I told you all about tensors, but if that was the only thing PyTorch provided, we'd basically just be a Numpy clone.  The distinguishing characteristic of PyTorch when it was originally released was that it provided automatic differentiation on tensors (these days, we have other cool features like TorchScript; but back then, this was it!)</p>
+<p>What does automatic differentiation do?  It's the machinery that's responsible for taking a neural network:</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-17.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-17.png" /></div></div>
+<p>...and fill in the missing code that actually computes the gradients of your network:</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-18.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-18.png" /></div></div>
+<p>Take a moment to study this diagram.  There's a lot to unpack; here's what to look at:</p>
+<ol class="arabic simple">
+<li>First, rest your eyes on the variables in red and blue.  PyTorch implements <a class="reference external" href="https://en.wikipedia.org/wiki/Automatic_differentiation#Reverse_accumulation">reverse-mode automatic differentiation</a>, which means that we effectively walk the forward computations &quot;backward&quot; to compute the gradients.  You can see this if you look at the variable names: at the bottom of the red, we compute <tt class="docutils literal">loss</tt>; then, the first thing we do in the blue part of the program is compute <tt class="docutils literal">grad_loss</tt>.  <tt class="docutils literal">loss</tt> was computed from <tt class="docutils literal">next_h2</tt>, so we compute <tt class="docutils literal">grad_next_h2</tt>.  Technically, these variables which we call <tt class="docutils literal">grad_</tt> are not really gradients; they're really Jacobians left-multiplied by a vector, but in PyTorch we just call them <tt class="docutils literal">grad</tt> and mostly everyone knows what we mean.</li>
+<li>If the structure of the code stays the same, the behavior doesn't: each line from forwards is replaced with a different computation, that represents the derivative of the forward operation.  For example, the <tt class="docutils literal">tanh</tt> operation is translated into a <tt class="docutils literal">tanh_backward</tt> operation (these two lines are connected via a grey line on the left hand side of the diagram).  The inputs and outputs of the forward and backward operations are swapped: if the forward operation produced <tt class="docutils literal">next_h2</tt>, the backward operation takes <tt class="docutils literal">grad_next_h2</tt> as an input.</li>
+</ol>
+<p>The whole point of autograd is to do the computation that is described by this diagram, but without actually ever generating this source.  PyTorch autograd doesn't do a source-to-source transformation (though PyTorch JIT does know how to do symbolic differentiation).</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-19.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-19.png" /></div></div>
+<p>To do this, we need to store more metadata when we carry out operations on tensors.  Let's adjust our picture of the tensor data structure: now instead of just a tensor which points to a storage, we now have a variable which wraps this tensor, and also stores more information (AutogradMeta), which is needed for performing autograd when a user calls <tt class="docutils literal">loss.backward()</tt> in their PyTorch script.</p>
+<!--  -->
+<blockquote>
+This is yet another slide which will hopefully be out of date in the near future.  Will Feng is working on a <a class="reference external" href="https://github.com/pytorch/pytorch/issues/13638">Variable-Tensor merge in C++</a>, following a simple merge which happened to PyTorch's frontend interface.</blockquote>
+<p>We also have to update our picture about dispatch:</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-20.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-20.png" /></div></div>
+<p>Before we dispatch to CPU or CUDA implementations, there is another dispatch on variables, which is responsible for unwrapping variables, calling the underlying implementation (in green), and then rewrapping the results into variables and recording the necessary autograd metadata for backwards.</p>
+<p>Some implementations don't unwrap; they just call into other variable implementations.  So you might spend a while in the Variable universe.  However, once you unwrap and go into the non-Variable Tensor universe, that's it; you never go back to Variable (except by returning from your function.)</p>
+<hr class="docutils" />
+<p>In my NY meetup talk, I skipped the following seven slides.  I'm also going to delay writeup for them; you'll have to wait for the sequel for some text.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-21.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-21.png" /></div></div>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-22.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-22.png" /></div></div>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-23.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-23.png" /></div></div>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-24.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-24.png" /></div></div>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-25.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-25.png" /></div></div>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-26.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-26.png" /></div></div>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-27.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-27.png" /></div></div>
+<hr class="docutils" />
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-28.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-28.png" /></div></div>
+<p>Enough about concepts, let's look at some code.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-29.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-29.png" /></div></div>
+<p>PyTorch has a lot of folders, and there is a very detailed description of what they are in the <a class="reference external" href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md#codebase-structure">CONTRIBUTING</a> document, but really, there are only four directories you really need to know about:</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-30.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-30.png" /></div></div>
+<ul class="simple">
+<li>First, <tt class="docutils literal">torch/</tt> contains what you are most familiar with: the actual Python modules that you import and use.  This stuff is Python code and easy to hack on (just make a change and see what happens).  However, lurking not too deep below the surface is...</li>
+<li><tt class="docutils literal">torch/csrc/</tt>, the C++ code that implements what you might call the frontend of PyTorch.  In more descriptive terms, it implements the binding code that translates between the Python and C++ universe, and also some pretty important pieces of PyTorch, like the autograd engine and the JIT compiler.  It also contains the C++ frontend code.</li>
+<li><tt class="docutils literal">aten/</tt>, short for &quot;A Tensor Library&quot; (coined by Zachary DeVito), is a C++ library that implements the operations of Tensors.  If you're looking for where some kernel code lives, chances are it's in ATen.  ATen itself bifurcates into two neighborhoods of operators: the &quot;native&quot; operators, which are modern, C++ implementations of operators, and the &quot;legacy&quot; operators (TH, THC, THNN, THCUNN), which are legacy, C implementations.  The legacy operators are the bad part of town; try not to spend too much time there if you can.</li>
+<li><tt class="docutils literal">c10/</tt>, which is a pun on Caffe2 and A&quot;Ten&quot; (get it? Caffe 10) contains the core abstractions of PyTorch, including the actual implementations of the Tensor and Storage data structures.</li>
+</ul>
+<p>That's a lot of places to look for code; we should probably simplify the directory structure, but that's how it is.  If you're trying to work on operators, you'll spend most of your time in <tt class="docutils literal">aten</tt>.</p>
+<p>Let's see how this separation of code breaks down in practice:</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-31.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-31.png" /></div></div>
+<p>When you call a function like <tt class="docutils literal">torch.add</tt>, what actually happens?  If you remember the discussion we had about dispatching, you already have the basic picture in your head:</p>
+<ol class="arabic simple">
+<li>We have to translate from Python realm to the C++ realm (Python argument parsing)</li>
+<li>We handle <strong>variable</strong> dispatch (VariableType--Type, by the way, doesn't really have anything to do programming language types, and is just a gadget for doing dispatch.)</li>
+<li>We handle <strong>device type / layout</strong> dispatch (Type)</li>
+<li>We have the actual kernel, which is either a modern native function, or a legacy TH function.</li>
+</ol>
+<p>Each of these steps corresponds concretely to some code.  Let's cut our way through the jungle.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-32.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-32.png" /></div></div>
+<p>Our initial landing point in the C++ code is the C implementation of a Python function, which we've exposed to the Python side as something like <tt class="docutils literal">torch._C.VariableFunctions.add</tt>.  <tt class="docutils literal">THPVariable_add</tt> is the implementation of one such implementation.</p>
+<p>One important thing to know about this code is that it is auto-generated.  If you search in the GitHub repository, you won't find it, because you have to actually build PyTorch to see it.  Another important thing is, you don't have to really deeply understand what this code is doing; the idea is to skim over it and get a sense for what it is doing.  Above, I've annotated some of the most important bits in blue: you can see that there is a use of a class <tt class="docutils literal">PythonArgParser</tt> to actually pull out C++ objects out of the Python <tt class="docutils literal">args</tt> and <tt class="docutils literal">kwargs</tt>; we then call a <tt class="docutils literal">dispatch_add</tt> function (which I've inlined in red); this releases the global interpreter lock and then calls a plain old method on the C++ Tensor <tt class="docutils literal">self</tt>.  On its way back, we rewrap the returned <tt class="docutils literal">Tensor</tt> back into a <tt class="docutils literal">PyObject</tt>.</p>
+<p>(At this point, there's an error in the slides: I'm supposed to tell you about the Variable dispatch code.  I haven't fixed it here yet.  Some magic happens, then...)</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-33.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-33.png" /></div></div>
+<p>When we call the <tt class="docutils literal">add</tt> method on the <tt class="docutils literal">Tensor</tt> class, no virtual dispatch happens yet.  Instead, we have an inline method which calls a virtual method on a &quot;Type&quot; object.  This method is the actual virtual method (this is why I say Type is just a &quot;gadget&quot; that gets you dynamic dispatch.)  In the particular case of this example, this virtual call dispatches to an implementation of add on a class named <tt class="docutils literal">TypeDefault</tt>.  This happens to be because we have an implementation of <tt class="docutils literal">add</tt> that is the same for every device type (both CPU and CUDA); if we had happened to have different implementations, we might have instead landed on something like <tt class="docutils literal"><span class="pre">CPUFloatType::add</span></tt>.  It is this implementation of the virtual method that finally gets us to the actual kernel code.</p>
+<!--  -->
+<blockquote>
+Hopefully, this slide will be out-of-date very soon too; Roy Li is working on replacing <tt class="docutils literal">Type</tt> dispatch with another mechanism which will help us better support PyTorch on mobile.</blockquote>
+<p>It's worth reemphasizing that all of the code, until we got to the kernel, is automatically generated.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-34.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-34.png" /></div></div>
+<p>It's a bit twisty and turny, so once you have some basic orientation about what's going on, I recommend just jumping straight to the kernels.</p>
+<hr class="docutils" />
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-35.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-35.png" /></div></div>
+<p>PyTorch offers a lot of useful tools for prospective kernel writers.  In this section, we'll walk through a few of them.  But first of all, what do you need to write a kernel?</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-36.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-36.png" /></div></div>
+<p>We generally think of a kernel in PyTorch consisting of the following parts:</p>
+<ol class="arabic simple">
+<li>First, there's some metadata which we write about the kernel, which powers the code generation and lets you get all the bindings to Python, without having to write a single line of code.</li>
+<li>Once you've gotten to the kernel, you're past the device type / layout dispatch. The first thing you need to write is error checking, to make sure the input tensors are the correct dimensions.  (Error checking is really important!  Don't skimp on it!)</li>
+<li>Next, we generally have to allocate the result tensor which we are going to write the output into.</li>
+<li>Time for the kernel proper.  At this point, you now should do the second, dtype dispatch, to jump into a kernel which is specialized per dtype it operates on.  (You don't want to do this too early, because then you will be uselessly duplicating code that looks the same in any case.)</li>
+<li>Most performant kernels need some sort of parallelization, so that you can take advantage of multi-CPU systems.  (CUDA kernels are &quot;implicitly&quot; parallelized, since their programming model is built on top of massive parallelization).</li>
+<li>Finally, you need to access the data and do the computation you wanted to do!</li>
+</ol>
+<p>In the subsequent slides, we'll walk through some of the tools PyTorch has for helping you implementing these steps.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-37.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-37.png" /></div></div>
+<p>To take advantage of all of the code generation which PyTorch brings, you need to write a <em>schema</em> for your operator.  The schema gives a mypy-esque type of your function, and also controls whether or not we generate bindings for methods or functions on Tensor.  You also tell the schema what implementations of your operator should be called for given device-layout combinations.  Check out the <a class="reference external" href="https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/README.md">README in native</a> is for more information about this format.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-38.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-38.png" /></div></div>
+<p>You also may need to define a derivative for your operation in <a class="reference external" href="https://github.com/pytorch/pytorch/blob/master/tools/autograd/derivatives.yaml">derivatives.yaml</a>.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-39.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-39.png" /></div></div>
+<p>Error checking can be done by way of either a low level or a high level API.  The low level API is just a macro, <tt class="docutils literal">TORCH_CHECK</tt>, which takes a boolean, and then any number of arguments to make up the error string to render if the boolean is not true.  One nice thing about this macro is that you can intermix strings with non-string data; everything is formatted using their implementation of <tt class="docutils literal">operator&lt;&lt;</tt>, and most important data types in PyTorch have <tt class="docutils literal">operator&lt;&lt;</tt> implementations.</p>
+<p>The high level API saves you from having to write up repetitive error messages over and over again.  The way it works is you first wrap each <tt class="docutils literal">Tensor</tt> into a <tt class="docutils literal">TensorArg</tt>, which contains information about where the tensor came from (e.g., its argument name).  It then provides a number of pre-canned functions for checking various properties; e.g., <tt class="docutils literal">checkDim()</tt> tests if the tensor's dimensionality is a fixed number.  If it's not, the function provides a user-friendly error message based on the <tt class="docutils literal">TensorArg</tt> metadata.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-40.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-40.png" /></div></div>
+<p>One important thing to be aware about when writing operators in PyTorch, is that you are often signing up to write <em>three</em> operators: <tt class="docutils literal">abs_out</tt>, which operates on a preallocated output (this implements the <tt class="docutils literal">out=</tt> keyword argument), <tt class="docutils literal">abs_</tt>, which operates inplace, and <tt class="docutils literal">abs</tt>, which is the plain old functional version of an operator.</p>
+<p>Most of the time, <tt class="docutils literal">abs_out</tt> is the real workhorse, and <tt class="docutils literal">abs</tt> and <tt class="docutils literal">abs_</tt> are just thin wrappers around <tt class="docutils literal">abs_out</tt>; but sometimes writing specialized implementations for each case are warranted.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-41.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-41.png" /></div></div>
+<p>To do dtype dispatch, you should use the <tt class="docutils literal">AT_DISPATCH_ALL_TYPES</tt> macro.  This takes in the dtype of the tensor you want to dispatch over, and a lambda which will be specialized for each dtype that is dispatchable from the macro.  Usually, this lambda just calls a templated helper function.</p>
+<p>This macro doesn't just &quot;do dispatch&quot;, it also decides what dtypes your kernel will support.  As such, there are actually quite a few versions of this macro, which let you pick different subsets of dtypes to generate specializations for.  Most of the time, you'll just want <tt class="docutils literal">AT_DISPATCH_ALL_TYPES</tt>, but keep an eye out for situations when you might want to dispatch to some more types.  There's guidance in <a class="reference external" href="https://github.com/pytorch/pytorch/blob/21ef4cc615a7d9d772ade52a5023900718b09e92/aten/src/ATen/Dispatch.h#L62">Dispatch.h</a> for how to select the correct one for your use-case.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-43.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-43.png" /></div></div>
+<p>On CPU, you frequently want to parallelize your code.  In the past, this was usually done by directly sprinkling OpenMP pragmas in your code.</p>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-42.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-42.png" /></div></div>
+<p>At some point, we have to actually access the data.  PyTorch offers quite a few options for doing this.</p>
+<ol class="arabic simple">
+<li>If you just want to get a value at some specific location, you should use <tt class="docutils literal">TensorAccessor</tt>.  A tensor accessor is like a tensor, but it hard codes the dimensionality and dtype of the tensor as template parameters.  When you retrieve an accessor like <tt class="docutils literal">x.accessor&lt;float, <span class="pre">3&gt;();</span></tt>, we do a runtime test to make sure that the tensor really is this format; but after that, every access is unchecked.  Tensor accessors handle strides correctly, so you should prefer using them over raw pointer access (which, unfortunately, some legacy kernels do.)  There is also a <tt class="docutils literal">PackedTensorAccessor</tt>, which is specifically useful for sending an accessor over a CUDA launch, so that you can get accessors from inside your CUDA kernel.  (One notable gotcha: <tt class="docutils literal">TensorAccessor</tt> defaults to 64-bit indexing, which is much slower than 32-bit indexing in CUDA!)</li>
+<li>If you're writing some sort of operator with very regular element access, for example, a pointwise operation, you are much better off using a higher level of abstraction, the <tt class="docutils literal">TensorIterator</tt>.   This helper class automatically handles broadcasting and type promotion for you, and is quite handy.</li>
+<li>For true speed on CPU, you may need to write your kernel using vectorized CPU instructions.  We've got helpers for that too!  The <tt class="docutils literal">Vec256</tt> class represents a vector of scalars and provides a number of methods which perform vectorized operations on them all at once.  Helpers like <tt class="docutils literal">binary_kernel_vec</tt> then let you easily run vectorized operations, and then finish everything that doesn't round nicely into vector instructions using plain old instructions.  The infrastructure here also manages compiling your kernel multiple times under different instruction sets, and then testing at runtime what instructions your CPU supports, and using the best kernel in those situations.</li>
+</ol>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-44.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-44.png" /></div></div>
+<p>A lot of kernels in PyTorch are still written in the legacy TH style.  (By the way, TH stands for TorcH.  It's a pretty nice acronym, but unfortunately it is a bit poisoned; if you see TH in the name, assume that it's legacy.)  What do I mean by the legacy TH style?</p>
+<ol class="arabic simple">
+<li>It's written in C style, no (or very little) use of C++.</li>
+<li>It's manually refcounted (with manual calls to <tt class="docutils literal">THTensor_free</tt> to decrease refcounts when you're done using tensors), and</li>
+<li>It lives in <tt class="docutils literal">generic/</tt> directory, which means that we are actually going to compile the file multiple times, but with different <tt class="docutils literal">#define scalar_t</tt>.</li>
+</ol>
+<p>This code is pretty crazy, and we hate reviewing it, so please don't add to it.  One of the more useful tasks that you can do, if you like to code but don't know too much about kernel writing, is to port some of these TH functions to ATen.</p>
+<hr class="docutils" />
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-45.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-45.png" /></div></div>
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-46.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-46.png" /></div></div>
+<p>To wrap up, I want to talk a little bit about working efficiently on PyTorch.  If the largeness of PyTorch's C++ codebase is the first gatekeeper that stops people from contributing to PyTorch, the efficiency of your workflow is the second gatekeeper.  If you try to work on C++ with Python habits, <strong>you will have a bad time</strong>: it will take forever to recompile PyTorch, and it will take you forever to tell if your changes worked or not.</p>
+<p>How to work efficiently could probably be a talk in and of itself, but this slide calls out some of the most common anti-patterns I've seen when someone complains: &quot;It's hard to work on PyTorch.&quot;</p>
+<ol class="arabic simple">
+<li>If you edit a header, especially one that is included by many source files (and especially if it is included by CUDA files), expect a very long rebuild.  Try to stick to editing cpp files, and edit headers sparingly!</li>
+<li>Our CI is a very wonderful, zero-setup way to test if your changes worked or not. But expect to wait an hour or two before you get back signal.  If you are working on a change that will require lots of experimentation, spend the time setting up a local development environment.  Similarly, if you run into a hard to debug problem on a specific CI configuration, set it up locally.  You can <a class="reference external" href="https://github.com/pytorch/ossci-job-dsl">download and run the Docker images locally</a></li>
+<li>The <a class="reference external" href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md#use-ccache">CONTRIBUTING guide explains how to setup ccache</a>; this is highly recommended, because sometimes it will help you get lucky and avoid a massive recompile when you edit a header.  It also helps cover up bugs in our build system, when we recompile files when we shouldn't.</li>
+<li>At the end of the day, we have a lot of C++ code, and you will have a much more pleasant experience if you build on a beefy server with CPUs and RAM.  In particular, I don't recommend doing CUDA builds on a laptop; building CUDA is sloooooow and laptops tend to not have enough juice to turnaround quickly enough.</li>
+</ol>
+<hr class="docutils" />
+<div class="outer-image"><div class="inner-image"><img alt="http://blog.ezyang.com/img/pytorch-internals/slide-47.png" src="http://blog.ezyang.com/img/pytorch-internals/slide-47.png" /></div></div>
+<p>So that's it for a whirlwind tour of PyTorch's internals!  Many, many things have been omitted; but hopefully the descriptions and explanations here can help you get a grip on at least a substantial portion of the codebase.</p>
+<p>Where should you go from here?  What kinds of contributions can you make?  A good place to start is our issue tracker.  Starting earlier this year, we have been triaging issues; issues labeled <strong>triaged</strong> mean that at least one PyTorch developer has looked at it and made an initial assessment about the issue.  You can use these labels to find out what issues we think are <a class="reference external" href="https://github.com/pytorch/pytorch/issues?q=is%3Aopen+is%3Aissue+label%3A%22high+priority%22+label%3Atriaged">high priority</a> or look up issues specific to some module, e.g., <a class="reference external" href="https://github.com/pytorch/pytorch/issues?q=is%3Aopen+is%3Aissue+label%3Atriaged+label%3A%22module%3A+autograd%22">autograd</a> or find issues which we think are <a class="reference external" href="https://github.com/pytorch/pytorch/issues?q=is%3Aopen+is%3Aissue+label%3Atriaged+label%3Asmall">small</a> (word of warning: we're sometimes wrong!)</p>
+<p>Even if you don't want to get started with coding right away, there are many other useful activities like improving documentation (I <em>love</em> merging documentation PRs, they are so great), helping us reproduce bug reports from other users, and also just helping us discuss RFCs on the issue tracker. PyTorch would not be where it is today without our open source contributors; we hope you can join us too!</p>
+</div>
+      <footer>
+                <ul class="small">
+          <li><abbr class="published" title="2019-05-16T22:11:22-0500"><a href="http://blog.ezyang.com/2019/05/16/">May 16, 2019</a></abbr></li>
+          <li><a href="http://blog.ezyang.com/category/pytorch/" rel="category tag">PyTorch</a></li>
+        </ul>
+              </footer>
+    </article>
+
+    <footer id="comments">
+      <h3>61 Responses to &#8220;PyTorch internals&#8221;</h3>
+    <ol class="commentlist">
+      		<li class="comment even thread-even depth-1" id="comment-30887">
+				<div id="div-comment-30887" class="comment-body">
+				<div class="comment-author vcard">
+			<img alt='' src='http://1.gravatar.com/avatar/?s=52&#038;d=mm&#038;r=g' srcset='http://0.gravatar.com/avatar/?s=104&#038;d=mm&#038;r=g 2x' class='avatar avatar-52 photo avatar-default' height='52' width='52' />			<cite class="fn">Benjamin</cite> <span class="says">says:</span>		</div>
+		
+		<div class="comment-meta commentmetadata"><a href="http://blog.ezyang.com/2019/05/pytorch-internals/comment-page-2/#comment-30887">
+			November 9, 2023 at 10:41 pm				</a>
+						</div>
+
+		<p>Hi Edward, is there any systematic docs on pytorch internals?</p>
+
+		
+				</div>
+				</li><!-- #comment-## -->
+		<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-31012">
+				<div id="div-comment-31012" class="comment-body">
+				<div class="comment-author vcard">
+			<img alt='' src='http://1.gravatar.com/avatar/?s=52&#038;d=mm&#038;r=g' srcset='http://2.gravatar.com/avatar/?s=104&#038;d=mm&#038;r=g 2x' class='avatar avatar-52 photo avatar-default' height='52' width='52' />			<cite class="fn">zuko</cite> <span class="says">says:</span>		</div>
+		
+		<div class="comment-meta commentmetadata"><a href="http://blog.ezyang.com/2019/05/pytorch-internals/comment-page-2/#comment-31012">
+			November 29, 2023 at 6:14 pm				</a>
+						</div>
+
+		<p>thanks for the writeup :)</p>
+
+		
+				</div>
+				</li><!-- #comment-## -->
+		<li class="comment even thread-even depth-1" id="comment-31477">
+				<div id="div-comment-31477" class="comment-body">
+				<div class="comment-author vcard">
+			<img alt='' src='http://1.gravatar.com/avatar/?s=52&#038;d=mm&#038;r=g' srcset='http://0.gravatar.com/avatar/?s=104&#038;d=mm&#038;r=g 2x' class='avatar avatar-52 photo avatar-default' height='52' width='52' />			<cite class="fn">Avishake</cite> <span class="says">says:</span>		</div>
+		
+		<div class="comment-meta commentmetadata"><a href="http://blog.ezyang.com/2019/05/pytorch-internals/comment-page-2/#comment-31477">
+			January 26, 2024 at 7:36 am				</a>
+						</div>
+
+		<p>Thanks for the amazing blog post that we have here.<br />
+It was really very interesting.<br />
+:)</p>
+
+		
+				</div>
+				</li><!-- #comment-## -->
+		<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-31943">
+				<div id="div-comment-31943" class="comment-body">
+				<div class="comment-author vcard">
+			<img alt='' src='http://0.gravatar.com/avatar/?s=52&#038;d=mm&#038;r=g' srcset='http://1.gravatar.com/avatar/?s=104&#038;d=mm&#038;r=g 2x' class='avatar avatar-52 photo avatar-default' height='52' width='52' />			<cite class="fn">dosmas</cite> <span class="says">says:</span>		</div>
+		
+		<div class="comment-meta commentmetadata"><a href="http://blog.ezyang.com/2019/05/pytorch-internals/comment-page-2/#comment-31943">
+			March 21, 2024 at 12:28 am				</a>
+						</div>
+
+		<p>No one knows why c10 is c10:<br />
+either it is Caffe TENsor, or Core TENsor, or Caffe 10 (in binary).</p>
+
+		
+				</div>
+				</li><!-- #comment-## -->
+		<li class="pingback even thread-even depth-1" id="comment-32155">
+				<div id="div-comment-32155" class="comment-body">
+				<div class="comment-author vcard">
+						<cite class="fn"><a href='https://geek.ds3783.com/2024/04/pytorch-%e5%86%85%e9%83%a8%e6%9c%ba%e5%88%b6%ef%bc%9aezyang%e7%9a%84%e5%8d%9a%e5%ae%a2%ef%bc%882019%ef%bc%89/' rel='external nofollow' class='url'>PyTorch 内部机制：ezyang的博客（2019） - 偏执的码农</a></cite> <span class="says">says:</span>		</div>
+		
+		<div class="comment-meta commentmetadata"><a href="http://blog.ezyang.com/2019/05/pytorch-internals/comment-page-2/#comment-32155">
+			April 16, 2024 at 7:39 am				</a>
+						</div>
+
+		<p>[&#8230;] 详情参考 [&#8230;]</p>
+
+		
+				</div>
+				</li><!-- #comment-## -->
+		<li class="pingback odd alt thread-odd thread-alt depth-1" id="comment-33432">
+				<div id="div-comment-33432" class="comment-body">
+				<div class="comment-author vcard">
+						<cite class="fn"><a href='https://radicaldatascience.wordpress.com/2024/08/28/ai-news-briefs-bulletin-board-for-august-2024/' rel='external nofollow' class='url'>AI News Briefs BULLETIN BOARD for August 2024 | Radical Data Science</a></cite> <span class="says">says:</span>		</div>
+		
+		<div class="comment-meta commentmetadata"><a href="http://blog.ezyang.com/2019/05/pytorch-internals/comment-page-2/#comment-33432">
+			August 30, 2024 at 5:37 pm				</a>
+						</div>
+
+		<p>[&#8230;] A comprehensive overview of PyTorch&#8217;s internal architecture and implementation details &#8211; It covers the core concepts and mechanisms that power the PyTorch library. You&#8217;ll [&#8230;]</p>
+
+		
+				</div>
+				</li><!-- #comment-## -->
+		<li class="comment even thread-even depth-1" id="comment-33597">
+				<div id="div-comment-33597" class="comment-body">
+				<div class="comment-author vcard">
+			<img alt='' src='http://1.gravatar.com/avatar/?s=52&#038;d=mm&#038;r=g' srcset='http://0.gravatar.com/avatar/?s=104&#038;d=mm&#038;r=g 2x' class='avatar avatar-52 photo avatar-default' height='52' width='52' />			<cite class="fn">Fortune Olawale</cite> <span class="says">says:</span>		</div>
+		
+		<div class="comment-meta commentmetadata"><a href="http://blog.ezyang.com/2019/05/pytorch-internals/comment-page-2/#comment-33597">
+			September 23, 2024 at 2:44 am				</a>
+						</div>
+
+		<p>nice writeup!</p>
+
+		
+				</div>
+				</li><!-- #comment-## -->
+		<li class="comment byuser comment-author-admin bypostauthor odd alt thread-odd thread-alt depth-1" id="comment-33681">
+				<div id="div-comment-33681" class="comment-body">
+				<div class="comment-author vcard">
+			<img alt='' src='http://1.gravatar.com/avatar/434aee9ad675384a9e745c7217ac4abe?s=52&#038;d=mm&#038;r=g' srcset='http://1.gravatar.com/avatar/434aee9ad675384a9e745c7217ac4abe?s=104&#038;d=mm&#038;r=g 2x' class='avatar avatar-52 photo' height='52' width='52' />			<cite class="fn"><a href='http://ezyang.com' rel='external nofollow' class='url'>Edward Z. Yang</a></cite> <span class="says">says:</span>		</div>
+		
+		<div class="comment-meta commentmetadata"><a href="http://blog.ezyang.com/2019/05/pytorch-internals/comment-page-2/#comment-33681">
+			October 4, 2024 at 4:50 pm				</a>
+						</div>
+
+		<p>That&#8217;s why we named it that way!</p>
+
+		
+				</div>
+				</li><!-- #comment-## -->
+		<li class="comment even thread-even depth-1" id="comment-33691">
+				<div id="div-comment-33691" class="comment-body">
+				<div class="comment-author vcard">
+			<img alt='' src='http://2.gravatar.com/avatar/?s=52&#038;d=mm&#038;r=g' srcset='http://0.gravatar.com/avatar/?s=104&#038;d=mm&#038;r=g 2x' class='avatar avatar-52 photo avatar-default' height='52' width='52' />			<cite class="fn">Mohamed Hafez</cite> <span class="says">says:</span>		</div>
+		
+		<div class="comment-meta commentmetadata"><a href="http://blog.ezyang.com/2019/05/pytorch-internals/comment-page-2/#comment-33691">
+			October 5, 2024 at 5:36 pm				</a>
+						</div>
+
+		<p>This is one the best and most concise introductions to this huge library I&#8217;ve read in a while</p>
+
+		
+				</div>
+				</li><!-- #comment-## -->
+		<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-33887">
+				<div id="div-comment-33887" class="comment-body">
+				<div class="comment-author vcard">
+			<img alt='' src='http://1.gravatar.com/avatar/?s=52&#038;d=mm&#038;r=g' srcset='http://1.gravatar.com/avatar/?s=104&#038;d=mm&#038;r=g 2x' class='avatar avatar-52 photo avatar-default' height='52' width='52' />			<cite class="fn">Anonymous</cite> <span class="says">says:</span>		</div>
+		
+		<div class="comment-meta commentmetadata"><a href="http://blog.ezyang.com/2019/05/pytorch-internals/comment-page-2/#comment-33887">
+			October 30, 2024 at 9:06 am				</a>
+						</div>
+
+		<p>An excellent blog post to get a brief overview of what&#8217;s happening under the hood in PyTorch. Everyone should read this!</p>
+
+		
+				</div>
+				</li><!-- #comment-## -->
+		<li class="comment even thread-even depth-1" id="comment-33916">
+				<div id="div-comment-33916" class="comment-body">
+				<div class="comment-author vcard">
+			<img alt='' src='http://0.gravatar.com/avatar/?s=52&#038;d=mm&#038;r=g' srcset='http://0.gravatar.com/avatar/?s=104&#038;d=mm&#038;r=g 2x' class='avatar avatar-52 photo avatar-default' height='52' width='52' />			<cite class="fn">Bo-Yu Cheng</cite> <span class="says">says:</span>		</div>
+		
+		<div class="comment-meta commentmetadata"><a href="http://blog.ezyang.com/2019/05/pytorch-internals/comment-page-2/#comment-33916">
+			November 2, 2024 at 1:01 pm				</a>
+						</div>
+
+		<p>Thanks for the post, it helps a lot for better understanding.</p>
+
+		
+				</div>
+				</li><!-- #comment-## -->
+    </ol>
+  
+            <form action="http://blog.ezyang.com/wp-comments-post.php" method="post" id="commentform">
+        <h3>Leave a Comment</h3>
+                  <p>
+            <label>Name (Optional): <input type="text" name="author" id="author" value="" /></label>
+          </p>
+                <label>Comment: <textarea name="comment" id="comment" cols="50" rows="20"></textarea></label>
+        <div id="cancel-comment-reply" class="p reply">
+          <a rel="nofollow" id="cancel-comment-reply-link" href="/2019/05/pytorch-internals/#respond" style="display:none;">Cancel Reply</a>        </div>
+        <input type="submit" value="Post Comment" /> <input type="hidden" name="comment_post_ID" value="10160" />
+        <input type='hidden' name='comment_post_ID' value='10160' id='comment_post_ID' />
+<input type='hidden' name='comment_parent' id='comment_parent' value='0' />
+        <p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="3e91913770" /></p><p style="display:none;"><input type="text" name="nxts" value="1733183277" /><input type="text" name="nxts_signed" value="b267835f610da4a1c8af457975252ff4ac6a5b61" /><input type="text" name="604d6fb615e8f492d" value="" /><input type="text" name="b09a595b22b6cf898b9b58fa" value="8439223d7954fa0" /></p><p style="display: none;"><input type="hidden" id="ak_js" name="ak_js" value="90"/></p>      </form>
+      </footer> <!-- /comments -->
+
+    <div class="pagination p">
+      <span class="previous"><a href="http://blog.ezyang.com/2019/05/a-short-note-about-functional-linear-maps/" rel="prev">&laquo; Previous Post</a></span>
+      <span class="next"><a href="http://blog.ezyang.com/2020/01/vmap-in-haskell/" rel="next">Next Post &raquo;</a></span>
+    </div>
+  </div>
+</div> <!-- /content -->
+
+<footer class="bottom small wrap">
+    <p class="small">&copy; ezyang’s blog. Powered by <a href="http://wordpress.org/">WordPress</a>, theme based off of <a href="http://jxnblk.com/ashley/">Ashley</a>.</p>
+  </div>
+</footer>
+
+<script type='text/javascript' src='http://blog.ezyang.com/wp-content/plugins/akismet/_inc/form.js?ver=3.2'></script>
+<script type='text/javascript' src='http://blog.ezyang.com/wp-includes/js/comment-reply.min.js?ver=5.1.19'></script>
+<script type='text/javascript' src='http://blog.ezyang.com/wp-includes/js/wp-embed.min.js?ver=5.1.19'></script>
+
+</body>
+</html>

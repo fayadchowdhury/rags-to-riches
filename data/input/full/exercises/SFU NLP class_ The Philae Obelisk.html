@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/x-icon" href="/nlp-classfavicon.ico">
+    <title>SFU NLP class: The Philae Obelisk</title>
+
+    <!-- CSS -->
+    <link href="/nlp-class/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/nlp-class/dist/css/bootstrap-glyphicons.css" rel="stylesheet">
+    <link href="/nlp-class/assets/css/nlp-class.css" rel="stylesheet">   
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+
+    <!-- MathJax
+    <script type="text/javascript" async
+      src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML">
+    </script>
+    -->
+    <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    TeX: {
+      equationNumbers: {
+        autoNumber: "AMS"
+      }
+    },
+    tex2jax: {
+      inlineMath: [ ['$','$'], ['\\(', '\\)'] ],
+      displayMath: [ ['$$','$$'], ['\\[', '\\]'] ],
+      processEscapes: true,
+    }
+  });
+</script>
+<script type="text/javascript"
+	src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+  </head>
+  <body>
+    <a class="sr-only" href="#content">Skip to main content</a>
+
+    <!-- Docs master nav -->
+    <header class="navbar navbar-fixed-top navbar-default" role="banner">
+      <div class="container">
+        <div class="row">
+        <div class="navbar-header">
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <ul class="nav navbar-nav">
+            <li id="main_page"><a href="/nlp-class/index.html" class="navbar-brand">Natural Language Processing</a></li>
+          </ul>
+        </div>
+        <nav class="collapse navbar-collapse" role="navigation">
+          <ul class="nav navbar-nav">
+            <li id="syllabus"><a href="/nlp-class/syllabus.html">Syllabus</a></li>
+            <li id="homework">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#">Homework <span class="caret"></span></a>
+              <ol class="dropdown-menu">
+                <li><a href="/nlp-class/hw0.html">0. Setup</a></li>
+                <li><a href="/nlp-class/hw1.html">1. Word Vectors</a></li>
+                <li><a href="/nlp-class/hw2.html">2. BERT Finetuning</a></li>
+                <li><a href="/nlp-class/hw3.html">3. Prompt Tuning for Text Generation</a></li>
+                <li><a href="/nlp-class/hw4.html">4. Preference Optimization</a></li>
+              </ol>
+            </li>
+            <li id="project"><a href="project.html">Project</a></li>
+            <li id="faq"><a href="/nlp-class/faq.html">FAQ</a></li>
+          </ul>
+        </nav>
+      </div>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-2 hidden-sm hidden-xs">
+        
+        </div>
+        <div class="col-sm-10">
+          <h2 id="the-philae-obelisk-by-anoop-sarkar">The Philae Obelisk <span class="text-muted">by Anoop Sarkar</span></h2>
+
+<h3 id="introduction">Introduction</h3>
+
+<p>The most famous artifact in the decipherment of Egyptian hieroglyph
+writing is the <a href="http://en.wikipedia.org/wiki/Rosetta_Stone">Rosetta Stone</a>.  However
+another artifact, called the <a href="http://en.wikipedia.org/wiki/Philae_obelisk">Philae obelisk</a> (also called
+the Bankes obelisk) was also instrumental in the decipherment.</p>
+
+<h3 id="the-problem">The Problem</h3>
+
+<p><a href="http://en.wikipedia.org/wiki/William_John_Bankes">William John Bankes</a>
+acquired this obelisk after it was found at Philae in Upper Egypt
+in 1815.  He noted two inscriptions on it, one in Egyptian hieroglyphs,
+the other in ancient Greek. By comparing the two texts, although
+they were not translations of one another, Bankes believed that the
+names <code class="language-plaintext highlighter-rouge">CLEOPATRA</code> and <code class="language-plaintext highlighter-rouge">PTOLMEES</code> (<code class="language-plaintext highlighter-rouge">EE</code> can be written as <code class="language-plaintext highlighter-rouge">Y</code> and so usually this name is written as <em>Ptolemy</em> in English)
+must appear in the hieroglyphic inscriptions.</p>
+
+<p>Both <a href="http://en.wikipedia.org/wiki/Thomas_Young_%28scientist%29">Thomas Young</a>
+and <a href="http://en.wikipedia.org/wiki/Jean-Fran%C3%A7ois_Champollion">Jean-François Champollion</a>
+used this information in their attempts to decipher the script.</p>
+
+<p>We will use inscriptions from the Philae obelisk and compare to inscriptions on the Rosetta
+stone to find a key to begin to understand Egyptian hieroglyphs.</p>
+
+<h3 id="the-questions">The Questions</h3>
+
+<ol>
+  <li>A cartouche is an oval with a horizontal
+line at one end, indicating that the text enclosed is a royal name. Pick which of the following cartouches refers to <code class="language-plaintext highlighter-rouge">CLEOPATRA</code>. <br />
+<img src="../img/philae1.png" alt="Philae obelisk inscription" title="Philae obelisk inscription" /></li>
+  <li>Find the Greek name written in the Egyptian hieroglyph script as:<br />
+<img src="../img/philae2.png" alt="Mystery glyph" title="Mystery glyph" />
+<br />Hint: There is a famous city named after him in Egypt where Cleopatra was born, where she ruled and where she eventually died.<br /></li>
+  <li>Who is the topic of discussion in this inscription from the Rosetta stone?<br />
+<img src="../img/rosetta1.png" alt="Rosetta stone inscription" title="Rosetta stone inscription" /></li>
+  <li>Champollion used the Greek translation in the Rosetta stone and his knowledge of <a href="http://en.wikipedia.org/wiki/Coptic_language">Coptic</a> to infer
+the sound values for part of the inscription:
+<code class="language-plaintext highlighter-rouge">?? ankh djet Ptah mer</code> (in Coptic, <code class="language-plaintext highlighter-rouge">ankh</code> means <em>life</em>; <code class="language-plaintext highlighter-rouge">djet</code> means
+<em>for ever</em>; and <code class="language-plaintext highlighter-rouge">mer</code> means <em>love</em>). Use the Egyptian
+script to write the words <code class="language-plaintext highlighter-rouge">Ptah</code> and <code class="language-plaintext highlighter-rouge">mer</code>. <a href="http://en.wikipedia.org/wiki/Ptah">Ptah</a> is an Egyptian god.</li>
+  <li>Write down the translation into English of the Rosetta stone inscription above.</li>
+</ol>
+
+        </div>
+      </div>
+
+      <footer class="text-center text-muted">
+        <hr/>
+        Last updated November 29, 2024.<br/>
+        Forked from the JHU MT class code on <a href="https://github.com/mt-class/jhu">github <i class="fa fa-github-alt"></i></a> by <a href="https://github.com/mjpost">Matt Post</a> and <a href="https://github.com/alopez">Adam Lopez</a>.<br/>
+        <br/><br/>
+      </footer>
+    </div>
+
+    <!-- Page content of course! -->
+    <!-- JS and analytics only. -->
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/nlp-class/dist/js/bootstrap.js"></script>
+    <script type="text/javascript">
+      $(document).ready(function(){
+        $("#syllabus").addClass("active");
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,321 @@
+preliminary Information,Question,Answer
+"Language Models
+Mrs. Malaprop would like to build a spelling corrector focused on the particular problem of there vs their.
+The idea is to build a model that takes a sentence as input, for example:
+1. 2. He saw their football in the park
+He saw their was a football in the park
+For each instance of their or there Mrs. Malaprop wants to predict whether the true spelling should be
+their or there. So for sentence (1) the model should predict their, and for sentence (2) the model should
+predict there. Note that for the second example the model would correct the spelling mistake in the
+sentence. Mrs. Malaprop recently took some NLP classes so she wants to use a language model for this
+task. Given a language model p(w1, . . . , wn), return the spelling that gives the highest probability under
+the language model. So for example for the second sentence we would implement the rule: replace there
+with their and vice versa and compare the language model scores:
+If p(He saw there was a football in the park) >
+p(He saw their was a football in the park)
+Then return(there)
+Else return(their)
+Mrs. Malaprop decides to use an unigram model: p(w1, . . . , wn)=
+n
+i=1 q(wi) where q(wi)=
+N
+and N=
+w Count(w). Count(·) returns the number of times a word was seen in the corpus and N is the
+sum of counts for all words in the corpus. Assume N= 10, 000 and Count(there)= 110 and
+Count(their)= 50. Also assume that for every word w in the vocabulary Count(w) > 0.",What does the Mrs. Malaprop rule return for He saw their was a football in the park?,"there
+• max mark: 1 (all or nothing)"
+"Language Models
+Mrs. Malaprop would like to build a spelling corrector focused on the particular problem of there vs their.
+The idea is to build a model that takes a sentence as input, for example:
+1. 2. He saw their football in the park
+He saw their was a football in the park
+For each instance of their or there Mrs. Malaprop wants to predict whether the true spelling should be
+their or there. So for sentence (1) the model should predict their, and for sentence (2) the model should
+predict there. Note that for the second example the model would correct the spelling mistake in the
+sentence. Mrs. Malaprop recently took some NLP classes so she wants to use a language model for this
+task. Given a language model p(w1, . . . , wn), return the spelling that gives the highest probability under
+the language model. So for example for the second sentence we would implement the rule: replace there
+with their and vice versa and compare the language model scores:
+If p(He saw there was a football in the park) >
+p(He saw their was a football in the park)
+Then return(there)
+Else return(their)
+Mrs. Malaprop decides to use an unigram model: p(w1, . . . , wn)=
+n
+i=1 q(wi) where q(wi)=
+N
+and N=
+w Count(w). Count(·) returns the number of times a word was seen in the corpus and N is the
+sum of counts for all words in the corpus. Assume N= 10, 000 and Count(there)= 110 and
+Count(their)= 50. Also assume that for every word w in the vocabulary Count(w) > 0.","Is the Mrs. Malaprop rule a good solution to the their versus there problem? Say yes or no and give a
+short and precise one sentence justification for your answer.","No. Gives the wrong answer for He saw their football in the park.
+• max mark: 4
+• yes / no: 1 mark
+• explanation makes sense: 3 marks"
+"Hidden Markov Models
+The probability model P(ti |ti−2, ti−1) is provided below where each ti is a part of speech tag, e.g.
+P(D |N, V)=
+1
+3 . Also provided is P(wi |ti) that a word wi has a part of speech tag ti, e.g. P(flies |V)=
+The part of speech tag definitions are: bos (begin sentence marker), N (noun), V (verb), D (determiner),
+P (preposition), eos (end of sentence marker).""P(ti |ti−2, ti−1) ti−2 ti−1 ti
+1 bos bos N
+1
+2 bos N N
+1
+2 bos N V
+1
+2 N N V
+1
+2 N N P
+1
+3 N V D
+1
+3 N V V
+1
+3 N V P
+1 V D N
+1 V V D
+1 N P D
+1 V P D
+1 P D N
+1 D N eos \nP(wi |ti) ti wi
+1 D an
+2
+5 N time
+2
+5 N arrow
+1
+5 N flies
+1 P like
+1
+2 V like
+1
+2 V flies
+1 eos eos
+1 bos bos""","Consider a Jelinek-Mercer style interpolation smoothing scheme for P(wi |ti):
+Pjm(ti |ti−1) = Λ[ti−1]·P(ti |ti−1) + (1−Λ[ti−1])·P(ti)
+Λ is an array with a value Λ[ti] for each part of speech tag ti. Provide a condition on Λ that must be
+satisfied to ensure that Pjm is a well-defined probability model.","0 ≤Λ[ti] ≤1 for each ti.
+Note that we do not require the following condition:
+Λ[ti]= 1
+ti
+• max mark: 2
+• contains correct answer: 1 mark
+• answer has no extra conditions that are incorrect: 1 mark"
+"Hidden Markov Models
+The probability model P(ti |ti−2, ti−1) is provided below where each ti is a part of speech tag, e.g.
+P(D |N, V)=
+1
+3 . Also provided is P(wi |ti) that a word wi has a part of speech tag ti, e.g. P(flies |V)=
+The part of speech tag definitions are: bos (begin sentence marker), N (noun), V (verb), D (determiner),
+P (preposition), eos (end of sentence marker).""P(ti |ti−2, ti−1) ti−2 ti−1 ti
+1 bos bos N
+1
+2 bos N N
+1
+2 bos N V
+1
+2 N N V
+1
+2 N N P
+1
+3 N V D
+1
+3 N V V
+1
+3 N V P
+1 V D N
+1 V V D
+1 N P D
+1 V P D
+1 P D N
+1 D N eos \nP(wi |ti) ti wi
+1 D an
+2
+5 N time
+2
+5 N arrow
+1
+5 N flies
+1 P like
+1
+2 V like
+1
+2 V flies
+1 eos eos
+1 bos bos""","Provide a Hidden Markov Model (hmm) that uses the trigram part of speech probability
+P(ti |ti−2, ti−1) as the transition probability Phmm(sj |sk) and the probability P(wi |ti) as the emission
+probability Phmm(wj |sj).
+Important: Provide the hmm in the form of two tables as shown below. The first table contains
+transitions between states in the hmm and the transition probabilities and the second table contains the
+words emitted at each state and the emission probabilities. Do not provide entries with zero
+probability.
+from-state sk to-state sj P(sj |sk) state sj emission w P(w |sj)
+Hint: In your hmm the state ⟨N, eos⟩will have emission of word eos with probability 1 and will not
+2
+have transitions to any other states.","Here are the two tables that define the HMM, the transition table on the left and the emission table
+on the right:
+1
+2
+1
+2
+1
+2
+1
+2
+1
+3
+1
+3
+1
+3
+state sj bos, bos bos, N bos, N bos, N N, N N, N N, N N, V N, V V, D V, V V, V N, P V, P P, D D, N D, N D, N emission w bos time arrow flies time arrow flies like flies an like flies like like an time arrow flies P(w |sj)
+1
+2
+5
+2
+5
+1
+5
+2
+5
+2
+5
+1
+5
+1
+2
+1
+2
+1
+1
+2
+1
+2
+1
+1
+1
+2
+5
+2
+5
+1
+5
+from-state sk to-state sj P(sj |sk)
+bos, bos bos, N P(N |bos, bos) 1
+bos, N N, N P(N |bos, N) bos, N N, V P(V |bos, N) N, N N, V P(V |N, N) N, N N, P P(P |N, N) N, V V, D P(D |N, V) N, V V, V P(V |N, V) N, V V, P P(P |N, V) V, D D, N P(N |V, D) 1
+V, V V, D P(D |V, V) 1
+N, P P, D P(D |N, P) 1
+V, P P, D P(D |V, P) 1
+P, D D, N P(N |P, D) 1
+D, N N, eos P(eos |D, N) 1
+• max mark: 8
+• There are 32 entries in the tables above for transition and emission. 1
+4 mark for each table entry."
+"Hidden Markov Models
+The probability model P(ti |ti−2, ti−1) is provided below where each ti is a part of speech tag, e.g.
+P(D |N, V)=
+1
+3 . Also provided is P(wi |ti) that a word wi has a part of speech tag ti, e.g. P(flies |V)=
+The part of speech tag definitions are: bos (begin sentence marker), N (noun), V (verb), D (determiner),
+P (preposition), eos (end of sentence marker).""P(ti |ti−2, ti−1) ti−2 ti−1 ti
+1 bos bos N
+1
+2 bos N N
+1
+2 bos N V
+1
+2 N N V
+1
+2 N N P
+1
+3 N V D
+1
+3 N V V
+1
+3 N V P
+1 V D N
+1 V V D
+1 N P D
+1 V P D
+1 P D N
+1 D N eos \nP(wi |ti) ti wi
+1 D an
+2
+5 N time
+2
+5 N arrow
+1
+5 N flies
+1 P like
+1
+2 V like
+1
+2 V flies
+1 eos eos
+1 bos bos""","Based on your hmm constructed in 2b. what is the state sequence that would be provided by the
+Viterbi algorithm for the following input sentence:
+bos bos time flies like an arrow eos","Note that the only ambiguous words are flies (could be N or V) and like (could be V or P) and so all you need to
+do is compare the scores for the following sub-sequence. The bold-faced outcome wins for this sub-sequence
+which determines the best state sequence for the entire input.
+flies like
+(N, V) (V, P) (N, V) (V, V) (N, N) (N, P) (N, N) (N, V) 1
+2 ×1
+3 ×1
+1
+2 ×1
+3 ×1
+2
+1
+5 ×1
+2 ×1
+1
+5 ×1
+2 ×1
+2
+Since the best state sequence is then (bos,N)–(N,V)–(V,P)–(P,D)–(D,N)–(N,eos) the output best state sequence
+will be bos/bos, time/N, flies/V, like/P, an/D, arrow/N, eos/eos.
+• max mark: 5
+• correct state sequence: 2 marks
+• correct table (either small table above or full Viterbi table below): 3 marks The full table is given below but you do not need to compute the entire table to solve this question.
+bos time flies like an arrow eos
+(bos,bos) (bos,N) (N,V) (V,P) (P,D) (D,N) (N,eos)
+1 ×1 ×2
+5 ×1
+2 ×1
+2 ×1
+3 ×1 ×1 ×1 ×1 ×2
+5 ×1 ×1=
+1
+75
+(bos,bos) (bos,N) (N,V) (V,V) (V,D) (D,N) (N,eos)
+1 ×1 ×2
+5 ×1
+2 ×1
+2 ×1
+3 ×1
+2 ×1 ×1 ×1 ×2
+5 ×1 ×1=
+1
+150
+(bos,bos) (bos,N) (N,N) (N,P) (P,D) (D,N) (N,eos)
+1 ×1 ×2
+5 ×1
+2 ×1
+5 ×1
+2 ×1 ×1 ×1 ×1 ×2
+5 ×1 ×1=
+1
+125
+(bos,bos) (bos,N) (N,N) (N,V) (V,D) (D,N) (N,eos)
+1 ×1 ×2
+5 ×1
+2 ×1
+5 ×1
+2 ×1
+2 ×1
+3 ×1 ×1 ×2
+5 ×1 ×1=
+1
+750"
