@@ -5,6 +5,7 @@ from typing import List, Dict
 import logging
 from dotenv import load_dotenv
 import os
+import time
 
 load_dotenv()
 
@@ -74,9 +75,12 @@ class RAGSystem:
             
             source_knowledge = []
             for match in results.matches:
+                print(match)
                 source_info = {
                     'source': match.metadata.get('file_name', 'Unknown'),
-                    'context': match.metadata.get('first_10_words', 'No context available'),
+                    'context': match.metadata.get('first_10_tokens', 'No context available'),
+                    'text': match.metadata.get('text', 'No text available'),
+                    'id': match.get('id', 'No ID available'),
                     'score': f"{match.score:.4f}"
                 }
                 source_knowledge.append(source_info)
@@ -95,20 +99,22 @@ class RAGSystem:
             for source in source_knowledge
         ])
         
-        augmented_prompt = f"""You are an NLP expert. Based on the query provided and the relevant context retrieved from the knowledge base, provide:
-1. A direct answer that addresses the specific query
-2. If present, give evidence/examples from the relevant benchmark mentioned in the query
-3. If needed, Technical explanation of the scoring criteria as shown in the course materials
-4. References to any specific datasets or metrics mentioned in the retrieved lecture content
+        augmented_prompt = f"""
+            You are an NLP expert. Based on the query provided and the relevant context retrieved from the knowledge base, provide:
+            1. A direct answer that addresses the specific query
+            2. If present, give evidence/examples from the relevant benchmark mentioned in the query
+            3. If needed, Technical explanation of the scoring criteria as shown in the course materials
+            4. References to any specific datasets or metrics mentioned in the retrieved lecture content
 
-If the provided information is insufficient to answer the query, state this clearly and explain what additional information would be needed.
+            If the provided information is insufficient to answer the query, state this clearly and explain what additional information would be needed.
 
-Relevant Course Materials:
-{sources_text}
+            Relevant Course Materials:
+            {sources_text}
 
-Query: {query}
+            Query: {query}
 
-Answer:"""
+            Answer:
+        """
         
         return augmented_prompt
 
@@ -147,18 +153,19 @@ def initialize_rag_system():
         except Exception as e:
             logger.error(f"Error initializing RAG system: {str(e)}", exc_info=True)
             st.error(f"""
-            Error initializing RAG system. Debug information:
-            - Available indexes: {[index.name for index in pinecone.Pinecone(api_key=PINECONE_API_KEY).list_indexes()]}
-            - Attempted index name: {PINECONE_INDEX_NAME}
-            - Error message: {str(e)}
-            
-            Please check:
-            1. API keys are correct
-            2. Index name matches exactly
-            3. Index permissions are properly set
+                Error initializing RAG system. Debug information:
+                - Available indexes: {[index.name for index in pinecone.Pinecone(api_key=PINECONE_API_KEY).list_indexes()]}
+                - Attempted index name: {PINECONE_INDEX_NAME}
+                - Error message: {str(e)}
+                
+                Please check:
+                1. API keys are correct
+                2. Index name matches exactly
+                3. Index permissions are properly set
             """)
             return False
     return True
+
 def main():
     st.set_page_config(page_title="NLP Course Assistant", page_icon="🎓", layout="wide")
     load_dotenv()
@@ -166,43 +173,48 @@ def main():
     # Page header
     st.title("🎓 NLP Course Assistant")
     st.markdown("""
-    Ask questions about NLP concepts, benchmarks, and course materials.
-    The assistant will provide answers based on the course content and relevant sources.
+        Ask questions about NLP concepts, benchmarks, and course materials.
+        The assistant will provide answers based on the course content and relevant sources.
     """)
     
     # Initialize RAG system
     if not initialize_rag_system():
         return
     
-    # Query input
-    query = st.text_area(
-        "Enter your question:",
-        height=100,
-        placeholder="E.g., Explain the importance of MMLU benchmark in evaluating language models..."
-    )
-    
-    # Submit button
-    if st.button("Submit Question", type="primary"):
-        if not query:
-            st.warning("Please enter a question!")
-            return
-            
-        with st.spinner("Searching knowledge base and generating response..."):
+    if "messages" not in st.session_state:
+        st.session_state["messages"] = []
+
+    for message in st.session_state["messages"]:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    if prompt := st.chat_input("What is up?"):
+        st.session_state["messages"].append(
+            {
+                "role": "user",
+                "content": prompt
+            }
+        )
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        
+        with st.spinner("Getting response"):
             try:
-                # Get response and sources
-                response, sources = st.session_state.rag_system.get_response(query)
+                response, sources = st.session_state.rag_system.get_response(prompt)
+                with st.chat_message("assistant"):
+                    st.markdown(response)
+                    if sources:
+                        with st.expander("Sources"):
+                            for source in sources:
+                                st.markdown(f"- ID: {source['id']}, File: {source["source"]}: \"...{source["text"]}...\"")
+
                 
-                # Display response
-                st.markdown("### Answer")
-                st.markdown(response)
-                
-                # Display sources
-                st.markdown("### Reference Sources")
-                for source in sources:
-                    with st.expander(f"Source: {source['source']}"):
-                        st.markdown(f"**Context:** {source['context']}")
-                        st.markdown(f"**Relevance Score:** {source['score']}")
-                
+                st.session_state["messages"].append(
+                    {
+                        "role": "assistant",
+                        "content": response
+                    }
+                )
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
 
