@@ -75,7 +75,6 @@ class RAGSystem:
             
             source_knowledge = []
             for match in results.matches:
-                print(match)
                 source_info = {
                     'source': match.metadata.get('file_name', 'Unknown'),
                     'context': match.metadata.get('first_10_tokens', 'No context available'),
