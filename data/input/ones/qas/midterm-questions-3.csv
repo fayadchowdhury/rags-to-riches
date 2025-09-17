@@ -1,0 +1,127 @@
+preliminary Information,Question,Answer
+"(1) You are given the following training data for the prepositional phrase (PP) attachment task. v        n1        p        n2        Attachment
+join        board        as        director        V
+is        chairman        of        N.V.        N
+using        crocidolite        in        filters        V
+Where the attachment value of V indicates that p attaches to v and the attachment value of N indicates
+that p attaches to n1.
+In order to resolve PP attachment ambiguity we can train a probability model: P(A= N |v,n1,p,n2)
+which predicts the attachment A as N if P >0.5 and V otherwise.","(6pts) To define P(A= N |v,n1,p,n2) using n-gram probabilities, since we are unlikely to see the
+same four words v,n1,p,n2 in novel unseen data, in order for this probability model to be useful we
+need to take care of zero counts.
+ˆ
+Provide a Jelinek-Mercer style interpolation smoothing model
+P(A= N |v,n1,p,n2) for this PP
+attachment probability model. Do not use recursive interpolation in your solution.
+Assume that our training data is large enough to contain all the prepositions we might observe in
+unseen data. You cannot assume that all the verbs and nouns in the unseen data were seen in training.
+Your solution must have a 4-gram and at least two trigrams, at least two bigrams and at least one
+unigram.
+must obey such that
+In the interpolation model if you use any new variables then provide the constraints that the variables
+ˆ
+P continues to be a valid probability.","P(A= N |v,n1,p,n2)= λ1P(A= N |v,n1,p,n2)
++λ2P(A= N |v,p,n2)
++λ3P(A= N |n1,p,n2)
++λ4P(A= N |v,p)
++λ5P(A= N |n1,p)
++λ6P(A= N |p)
+To be a well-formed interpolation model, i λi = 1. There are many other solutions such as for instance,
+the 3-gram model could have diﬀerent choices for the conditioning context, e.g. v,n1,p instead of v,p,n2 and
+similarly for the bigrams. The solution must have at least one four-gram, two trigrams, two bigrams and one
+unigram (the preposition)."
+"(1) You are given the following training data for the prepositional phrase (PP) attachment task. v        n1        p        n2        Attachment
+join        board        as        director        V
+is        chairman        of        N.V.        N
+using        crocidolite        in        filters        V
+Where the attachment value of V indicates that p attaches to v and the attachment value of N indicates
+that p attaches to n1.
+In order to resolve PP attachment ambiguity we can train a probability model: P(A= N |v,n1,p,n2)
+which predicts the attachment A as N if P >0.5 and V otherwise.","(4pts) Assume you are given pre-trained word embeddings for each of the words in the prepositional
+phrase dataset. The embeddings we get from the word appearing as the center or target word are:
+tv,tn1,tp,tn2. The embeddings we get from the word appearing in the context are: cv,cn1,cp,cn2.
+ˆ
+Given a definition of
+P(A= N |v,n1,p,n2) we can define a classifier that predicts noun attachment if
+ˆ
+ˆ
+P(A= N |v,n1,p,n2) ≥0.5 and verb attachment if 1−
+P(A= N |v,n1,p,n2) >0.5 otherwise.
+ˆ
+Your task is to use only the dot products cn1·tp and cv·tp in order to provide
+P(A= N |v,n1,p,n2).
+The goal is to use the pre-trained word vectors to provide the probability for noun/verb attachment.
+Ignore the word embeddings for n2 (cn2 and tn2) for this question. Do not sum over the entire
+vocabulary to obtain a probability distribution.","P(A= N |v,n1,p,n2)= exp(cn1·tp)/
+exp(cn1·tp) + exp(cv·tp)"
+,"(3pts) You are given a text of words: w1,...,wN and you proceed to estimate bigram probabilities with
+the maximum likelihood estimate using the bigram frequencies c(wi,wi−1) and unigram frequencies c(wi):
+ˆ
+c(wi,wi−1)
+P(wi |wi−1)=
+c(wi−1)
+Write down the definition of a backoﬀ smoothed distribution Pbo(wi |wi−1) where we backoﬀ from the
+bigram probability c(wi,wi−1) to the unigram P(wi). using a new function c∗(wi−1,wi) which uses the
+absolute discounting method and α(wi−1), where α(wi−1) is chosen to make sure that Pbo(wi | wi−1) is a
+proper probability:
+α(wi−1)= 1−
+c∗(wi−1,wi)
+c(wi−1)
+wi
+Provide the definition of Pbo(wi |wi−1) and c∗(wi−1,wi). Assume that 1=
+wi P(wi).","Pbo(wi | wi−1)=
+c(wi−1,wi )−D
+c(wi−1) if c(wi−1,wi) >0
+α(wi−1)Pbo(wi) otherwise where D is set to some value less than one using held out set.
+"
+,"(2pts) Consider embedding a sentence by summing the GloVe embeddings of each word in the sentence.
+Pick which statement is true from the list below about the embeddings of the sentences we are winning
+and we are winning we are winning we are winning (assume the words are in the vocabulary).
+1. 2. The embeddings of the two sentences are equal.
+The embeddings of the two sentences are close when using Euclidean distance, but not cosine
+distance.
+3. The embeddings of the two sentences are close when using cosine distance, but not Euclidean
+distance.
+4. The embeddings of the two sentences are close when using cosine distance and Euclidean distance.
+5. None of the above.","The true statement is: The embeddings of the two sentences are close when using cosine distance, but
+not Euclidean distance."
+"We define a log-linear model that estimates a distribution Pr(s|w) where s is a sentiment label for a word,
+s ∈{positive,negative}and w is a word from the vocabulary V. The set V contains the words amazing and
+horrible as well as additional words (so that |V|>2). We want our log-linear model to specify the
+following probabilities (some probabilities are left undefined):
+Pr(positive |amazing)= 0.9
+Pr(negative |horrible)= 0.9
+Pr(positive |w)= Pr(negative |w)= 0.6 for any word w other than amazing, horrible
+0.4 for any word w other than amazing, horrible
+The value for probabilities Pr(negative |amazing),Pr(positive |horrible) are left unspecified. It is
+assumed they are given values such that the following condition is satisfied for every w ∈V:
+Pr(s |w)= 1.0
+s
+You are given exactly four features: f1(w,s),..., f4(w,s):
+f1(w,s)= 1 if w is amazing and s is positive, 0 otherwise
+f2(w,s)= 1 if w is horrible and s is negative, 0 otherwise
+f3(w,s)= 1 if w {amazing,horrible}and s is positive, 0 otherwise
+f4(w,s)= 1 if w {amazing,horrible}and s is negative, 0 otherwise
+Hint: For some input (w′
+,s′) if for all k the value of fk(w′
+,s′)= 0 then Pr(s′|w′)= e0
+Z where Z is the
+normalization term.","(4pts) For your feature vector {f1, f2, f3, f4}let the parameter vector be {v1,v2,v3,v4}. Write down the
+expressions for the following using the log linear model:
+1. Pr(positive |awesome)
+2. Pr(negative |amazing)","1. Pr(positive |awesome)=
+ev3/
+ev3 +ev4
+2. Pr(negative |amazing)=
+e0/
+ev1 +e0"
+,"(6pts) Define the values of the parameters v1,v2,v3,v4 for the log-linear model that can model the
+distribution provided above perfectly.","Pr(positive | amazing) = e^v1 / (e^v1 + e^0) = 0.9
+
+Pr(negative | horrible) = e^v2 / (e^0 + e^v2) = 0.9
+
+Pr(positive | w) = e^v3 / (e^v3 + e^v4) = 0.6 for any word w other than amazing, horrible
+
+Pr(negative | w) = e^v4 / (e^v3 + e^v4) = 0.4 for any word w other than amazing, horrible
+From the above we get the parameter values v1 = v2 = log(9) and v3 = log(6) and v4 = log(4). There are many
+other equivalent values as long as they give the right probability in the table above."

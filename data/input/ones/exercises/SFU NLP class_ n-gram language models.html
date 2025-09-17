@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/x-icon" href="/nlp-classfavicon.ico">
+    <title>SFU NLP class: n-gram language models</title>
+
+    <!-- CSS -->
+    <link href="/nlp-class/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/nlp-class/dist/css/bootstrap-glyphicons.css" rel="stylesheet">
+    <link href="/nlp-class/assets/css/nlp-class.css" rel="stylesheet">   
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+
+    <!-- MathJax
+    <script type="text/javascript" async
+      src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML">
+    </script>
+    -->
+    <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    TeX: {
+      equationNumbers: {
+        autoNumber: "AMS"
+      }
+    },
+    tex2jax: {
+      inlineMath: [ ['$','$'], ['\\(', '\\)'] ],
+      displayMath: [ ['$$','$$'], ['\\[', '\\]'] ],
+      processEscapes: true,
+    }
+  });
+</script>
+<script type="text/javascript"
+	src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+  </head>
+  <body>
+    <a class="sr-only" href="#content">Skip to main content</a>
+
+    <!-- Docs master nav -->
+    <header class="navbar navbar-fixed-top navbar-default" role="banner">
+      <div class="container">
+        <div class="row">
+        <div class="navbar-header">
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <ul class="nav navbar-nav">
+            <li id="main_page"><a href="/nlp-class/index.html" class="navbar-brand">Natural Language Processing</a></li>
+          </ul>
+        </div>
+        <nav class="collapse navbar-collapse" role="navigation">
+          <ul class="nav navbar-nav">
+            <li id="syllabus"><a href="/nlp-class/syllabus.html">Syllabus</a></li>
+            <li id="homework">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#">Homework <span class="caret"></span></a>
+              <ol class="dropdown-menu">
+                <li><a href="/nlp-class/hw0.html">0. Setup</a></li>
+                <li><a href="/nlp-class/hw1.html">1. Word Vectors</a></li>
+                <li><a href="/nlp-class/hw2.html">2. BERT Finetuning</a></li>
+                <li><a href="/nlp-class/hw3.html">3. Prompt Tuning for Text Generation</a></li>
+                <li><a href="/nlp-class/hw4.html">4. Preference Optimization</a></li>
+              </ol>
+            </li>
+            <li id="project"><a href="project.html">Project</a></li>
+            <li id="faq"><a href="/nlp-class/faq.html">FAQ</a></li>
+          </ul>
+        </nav>
+      </div>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-2 hidden-sm hidden-xs">
+        
+        </div>
+        <div class="col-sm-10">
+          <h2 id="n-gram-language-models">n-gram Language models</h2>
+
+<h3 id="question-1">Question 1</h3>
+
+<p>Consider the following sentence $s$ where <code class="language-plaintext highlighter-rouge">&lt;bs&gt;</code> and <code class="language-plaintext highlighter-rouge">&lt;es&gt;</code> are padding tokens:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;bs&gt; &lt;bs&gt; I would like to go West . &lt;es&gt;
+</code></pre></div></div>
+
+<ol>
+  <li>Write down $P(s)$ using a bigram language model.</li>
+  <li>Write down $P(s)$ using a trigram language model.</li>
+</ol>
+
+<h3 id="question-2">Question 2</h3>
+
+<p>Using a vocabulary \({\cal V} = \{\) crazy, killer, clown \(\}\) define a language model which has a particular constraint: \(p(x_1, \ldots, x_n) = \gamma_n \times 0.5^n\) for any \(x_1, \ldots, x_n\) such that \(x_i \in {\cal V}\) for \(i = 1, \ldots, n-1\) and \(x_n =\) STOP.</p>
+
+<p>\(\gamma_n\) is some expression that can be a function of \(n\).</p>
+
+<p>Choose one of the following definitions of \(\gamma_n\) so that \(p(x_1, \ldots, x_n)\) is a valid language model.</p>
+
+<table class="table">
+  <tbody>
+    <tr>
+      <td>1.</td>
+      <td>\(3^{n-1}\)</td>
+    </tr>
+    <tr>
+      <td>2.</td>
+      <td>\(3^n\)</td>
+    </tr>
+    <tr>
+      <td>3.</td>
+      <td>\(1\)</td>
+    </tr>
+    <tr>
+      <td>4.</td>
+      <td>\(\frac{1}{3^n}\)</td>
+    </tr>
+    <tr>
+      <td>5.</td>
+      <td>\(\frac{1}{3^{n-1}}\)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Hint: \(\sum_{n=1}^\infty 0.5^n = 1\).</p>
+
+<h3 id="question-3">Question 3</h3>
+
+<p>The perplexity of a language model on a test corpus is defined as</p>
+
+\[2^{-\ell}\]
+
+<p>where</p>
+
+\[\ell = \frac{1}{M} \sum_{i=1}^m \log_2 p(x^{(i)})\]
+
+<p>where \(m\) is the number of sentences in the corpus, \(M\) is the total number of words in the corpus,
+\(\log_2\) is log base 2, \(x^{(i)}\) is the \(i\)‘th sentence in the corpus.</p>
+
+<ol>
+  <li>What is the maximum value for perplexity \(2^{-\ell}\).</li>
+  <li>What is the minimum value for perplexity \(2^{-\ell}\).</li>
+  <li>
+    <p>Assume we have a bigram language model where</p>
+
+\[p(w_1, \ldots, w_n) = \prod_{i=1}^n q(w_i \mid w_{i-1})\]
+
+    <p>and \(w_0 = \ast\) and \(w_n =\) STOP. Each parameter \(q(w \mid v)\) is calculated as follows:</p>
+
+\[q(w \mid v) = \frac{C(v,w)}{C(v)}\]
+
+    <p>C(\(\cdot\)) is the count of that item in training data.
+Write down a training corpus and a test corpus such that the
+perplexity of the model trained on the training corpus takes the
+maximum possible value on the test corpus.</p>
+  </li>
+  <li>Write down a training corpus and a test corpus such that the perplexity of the model trained on 
+the training corpus takes the minimum possible value on the test corpus. (Assume that we use a 
+bigram language model as in the previous question).</li>
+</ol>
+
+<h3 id="question-4">Question 4</h3>
+
+<p>We define a trigram language model as follows. Take \(C(w),
+C(v, w)\) and \(C(u, v, w)\) to be unigram, bigram and trigram
+counts taken from a training corpus (here \(w\) is a single word, \(v, w\)
+is a bigram, and \(u, v, w\) is a trigram). Take \(N\) to be the total
+number of words seen in the corpus. Then the unigram, bigram and
+trigram maximum-likelihood estimates are:</p>
+
+\[q(w) = \frac{C(w)}{N}\]
+
+\[q(w \mid v) = \frac{C(v,w)}{C(v)}\]
+
+\[q(w \mid u, v) = \frac{C(u,v,w)}{C(u,v)}\]
+
+<p>The final estimate of the trigram probability is:</p>
+
+\[p(w \mid u, v) = \alpha \times q(w \mid u, v) + (1 - \alpha) \times \left( \beta \times q(w \mid v) + (1 - \beta) \times q(w) \right)\]
+
+<p>Assume that \(\alpha = \beta = 0.5\). Show that the above model is equivalent to the following model by providing 
+values for \(\lambda_1, \lambda_2, \lambda_3\).</p>
+
+\[p(w \mid u, v) = \lambda_1 \times q(w \mid u, v) + \lambda_2 \times q(w \mid v) + \lambda_3 \times q(w)\]
+
+<h3 id="question-5">Question 5</h3>
+
+<p>Consider the following corpus of sentences where <code class="language-plaintext highlighter-rouge">&lt;bs&gt;</code> and <code class="language-plaintext highlighter-rouge">&lt;es&gt;</code> are padding tokens:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;bs&gt; I am Sam &lt;es&gt;
+&lt;bs&gt; Sam I am &lt;es&gt;
+&lt;bs&gt; I do not like green eggs and ham &lt;es&gt;
+</code></pre></div></div>
+
+<p>Fill in the following table:</p>
+
+<table class="table">
+  <tbody>
+    <tr>
+      <td>P(<code class="language-plaintext highlighter-rouge">I</code> | <code class="language-plaintext highlighter-rouge">&lt;bs&gt;</code>) =</td>
+      <td> </td>
+      <td>P(<code class="language-plaintext highlighter-rouge">Sam</code> | <code class="language-plaintext highlighter-rouge">&lt;bs&gt;</code>) =</td>
+      <td> </td>
+      <td>P(<code class="language-plaintext highlighter-rouge">am</code> | <code class="language-plaintext highlighter-rouge">I</code>) =</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>P(<code class="language-plaintext highlighter-rouge">&lt;es&gt;</code> | <code class="language-plaintext highlighter-rouge">Sam</code>) =</td>
+      <td> </td>
+      <td>P(<code class="language-plaintext highlighter-rouge">Sam</code> | <code class="language-plaintext highlighter-rouge">am</code>) =</td>
+      <td> </td>
+      <td>P(<code class="language-plaintext highlighter-rouge">do</code> | <code class="language-plaintext highlighter-rouge">I</code>) =</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="acknowledgements">Acknowledgements</h3>
+
+<p>Some of these questions are modified versions of questions from the Columbia University course COMS 4705 by Michael Collins.</p>
+
+
+        </div>
+      </div>
+
+      <footer class="text-center text-muted">
+        <hr/>
+        Last updated November 29, 2024.<br/>
+        Forked from the JHU MT class code on <a href="https://github.com/mt-class/jhu">github <i class="fa fa-github-alt"></i></a> by <a href="https://github.com/mjpost">Matt Post</a> and <a href="https://github.com/alopez">Adam Lopez</a>.<br/>
+        <br/><br/>
+      </footer>
+    </div>
+
+    <!-- Page content of course! -->
+    <!-- JS and analytics only. -->
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/nlp-class/dist/js/bootstrap.js"></script>
+    <script type="text/javascript">
+      $(document).ready(function(){
+        $("#syllabus").addClass("active");
+      });
+    </script>
+  </body>
+</html>
