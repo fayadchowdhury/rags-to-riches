@@ -1,3 +1,6 @@
-data: data/input/subset
-query_pass: What are some disadvantages of linear neural networks?
+data: data/input/ones
+query_pass: How does Jelinek-Mercer smoothing work?
 query_fail: How does RLHF work for systems like ChatGPT?
+embeddings_dir: data/output/embeddings/text-embedding-ada-002-ones.json
+embeddings_saved: true
+vector_store_exists: true
