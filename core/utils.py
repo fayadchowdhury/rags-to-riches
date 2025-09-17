@@ -154,8 +154,8 @@ def initialize_generator(system_prompt: str, prompt_template: str, generator_con
     generator = None
     config = generator_config.get("config", {})
     type = generator_config.get("type", "")
-    generator_config["system_prompt"] = system_prompt
-    generator_config["prompt_template"] = prompt_template
+    config["system_prompt"] = system_prompt
+    config["prompt_template"] = prompt_template
     if type == "OpenAIGenerator":
         generator = OpenAIGenerator(**config)
 
