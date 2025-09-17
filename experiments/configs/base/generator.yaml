@@ -3,5 +3,5 @@ config:
   api_key: OPENAI_API_KEY
   model: gpt-4o-mini
   temperature: 0
-  system_prompt_path: system.txt
-  qa_prompt_path: qa.txt
+  system_prompt_path: system
+  qa_prompt_path: qa
