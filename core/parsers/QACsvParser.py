@@ -24,7 +24,7 @@ class QACsvParser(BaseParser):
             text = f"Info: {row['info']}\nQuestion: {row['question']}\nAnswer: {row['answer']}"
             self.data.append({
                 "file_type": "csv",
-                "file_name": "test",
+                "file_name": self.filename,
                 "marker": index+1,
                 "sub_marker": index+1, # Not necessary since we are not chunking
                 "text": text,
