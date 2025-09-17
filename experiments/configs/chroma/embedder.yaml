@@ -1,0 +1,4 @@
+type: OpenAIEmbedder
+config:
+  api_key: OPENAI_API_KEY
+  embedding_model: text-embedding-ada-002

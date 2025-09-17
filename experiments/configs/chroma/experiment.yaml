@@ -1,0 +1,3 @@
+data: data/input/subset
+query_pass: What are some disadvantages of linear neural networks?
+query_fail: How does RLHF work for systems like ChatGPT?
