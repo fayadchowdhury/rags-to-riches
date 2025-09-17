@@ -1,0 +1,19 @@
+pdf:
+  name: PdfParser
+  config:
+    hello: world
+
+html:
+  name: HtmlParser
+  config:
+    hello: world
+
+csv:
+  name: QACsvParser
+  config:
+    hello: world
+
+ipynb:
+  name: NotebookParser
+  config:
+    hello: world
