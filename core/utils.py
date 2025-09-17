@@ -1,7 +1,8 @@
 import yaml
 from dotenv import load_dotenv
 import os
-from typing import Dict
+import json
+from typing import Dict, List
 
 from core.parsers.BaseParser import BaseParser
 from core.parsers.PdfParser import PdfParser
@@ -39,6 +40,15 @@ def load_config_yaml(base_dir: str, type: str) -> Dict:
     '''
     with open(f"{base_dir}/{type}.yaml", "r") as f:
         return yaml.safe_load(f)
+    
+def save_config_yaml(config: Dict, base_dir: str, type: str) -> None:
+    '''
+    Take base directory and type of config YAML
+    Return config dictionary
+    '''
+    with open(f"{base_dir}/{type}.yaml", "w") as f:
+        yaml.safe_dump(config, f, default_flow_style=False, sort_keys=False)
+    return
     
 def read_prompt(base_dir: str, type: str) -> str:
     '''
@@ -150,3 +160,17 @@ def initialize_generator(system_prompt: str, prompt_template: str, generator_con
         generator = OpenAIGenerator(**config)
 
     return generator
+
+def check_for_embeddings(path: str) -> bool:
+    if os.path.exists(path):
+        return True
+    return False
+
+def save_embeddings(embeddings_list: List, output_path: str) -> None:
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(embeddings_list, f, indent=4, ensure_ascii=False)
+
+def load_embeddings(path: str) -> List[Dict]:
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
