@@ -12,7 +12,6 @@ class ChromaVectorStore(BaseVectorStore):
             path = self.persist_directory
         )
         self.collection_name = self.config.get("collection_name", "")
-        self.embedding_dim = self.config.get("embedding_dim", 1536)
 
         if not self.collection_name in [coll.name for coll in self.client.list_collections()]:
             self.collection = self.client.create_collection(
@@ -46,7 +45,7 @@ class ChromaVectorStore(BaseVectorStore):
         self.prepared_data = self._prepare_data_for_upsert(data)
         self.collection.add(
             ids=[d["id"] for d in self.prepared_data],
-            embeddings=[d["embedding"] for d in self.prepared_data],
+            embeddings=[d["values"] for d in self.prepared_data],
             metadatas=[d["metadata"] for d in self.prepared_data],
         )
         return 
