@@ -16,6 +16,7 @@ from core.embedders.BaseEmbedder import BaseEmbedder
 from core.embedders.OpenAIEmbedder import OpenAIEmbedder
 
 from core.vector_stores.BaseVectorStore import BaseVectorStore
+from core.vector_stores.ChromaVectorStore import ChromaVectorStore
 from core.vector_stores.PineconeVectorStore import PineconeVectorStore
 
 from core.retrievers.BaseRetriever import BaseRetriever
@@ -117,6 +118,8 @@ def initialize_vector_store(vector_store_config: Dict) -> BaseVectorStore:
     type = vector_store_config.get("type", "")
     if type == "PineconeVectorStore":
         vector_store = PineconeVectorStore(**config)
+    elif type == "ChromaVectorStore":
+        vector_store = ChromaVectorStore(**config)
 
     return vector_store
 
