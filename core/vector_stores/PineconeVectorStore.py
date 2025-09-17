@@ -56,10 +56,18 @@ class PineconeVectorStore(BaseVectorStore):
         return
     
     def query_top_k(self, query_embedding, k):
-        self.query_docs = self.index.query(
+        results = self.index.query(
             vector=query_embedding,
             top_k=k,
             include_metadata=True,
             include_values=False
         )
+
+        self.query_docs = [
+            {
+                "metadata": match["metadata"],
+                "score": match["score"]
+            } for match in results["matches"]
+        ]
+
         return self.query_docs
