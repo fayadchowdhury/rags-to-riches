@@ -11,6 +11,6 @@ class TopKRetriever(BaseRetriever):
         query_docs = self.vector_store.query_top_k(self.query_embedding, self.k)
         for doc in query_docs:
             text = doc["metadata"]["text"]
-            return_docs.append(" ".join(text))
+            return_docs.append(text)
 
         return return_docs
