@@ -209,3 +209,11 @@ __marimo__/
 .DS_Store
 
 data/output
+
+# Experiment results and logs
+experiments/logs/
+experiments/results/
+
+# MLFlow
+mlruns/
+mlartifacts/
