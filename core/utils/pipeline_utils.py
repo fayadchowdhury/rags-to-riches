@@ -27,6 +27,10 @@ from core.generators.BaseGenerator import BaseGenerator
 from core.generators.OpenAIGenerator import OpenAIGenerator
 
 def get_env_config(path: str) -> Dict:
+    '''
+    Take path to specified .env file
+    Return dictionary of environment variables
+    '''
     load_dotenv(path)
     return {
         "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY", ""),
@@ -76,6 +80,10 @@ def initialize_parser(type: str, parser_config: Dict) -> BaseParser:
     return parser
 
 def initialize_all_parsers(parsers_config: Dict) -> Dict:
+    '''
+    Take dictionary of config for parsers
+    Return dictionary of all parsers
+    '''
     all_parsers = {}
     for file_type, config in parsers_config.items():
         all_parsers[file_type] = initialize_parser(file_type, config.get("config", {}))
@@ -162,15 +170,28 @@ def initialize_generator(system_prompt: str, prompt_template: str, generator_con
     return generator
 
 def check_for_embeddings(path: str) -> bool:
+    '''
+    Take path to embeddings directory
+    Return True if directory exists, False otherwise
+    '''
     if os.path.exists(path):
         return True
     return False
 
 def save_embeddings(embeddings_list: List, output_path: str) -> None:
+    '''
+    Take embeddings list and output path
+    Save embeddings list to output path as JSON
+    Return None
+    '''
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(embeddings_list, f, indent=4, ensure_ascii=False)
 
 def load_embeddings(path: str) -> List[Dict]:
+    '''
+    Take path to embeddings JSON
+    Return embeddings list
+    '''
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
