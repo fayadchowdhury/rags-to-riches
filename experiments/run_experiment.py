@@ -1,7 +1,8 @@
+import logging
 import sys
 from pathlib import Path
 
-from core.utils import (
+from core.utils.pipeline_utils import (
     load_config_yaml,
     initialize_all_parsers,
     initialize_chunker,
@@ -18,11 +19,15 @@ from core.utils import (
     save_config_yaml
 )
 
+from core.utils.logging_utils import setup_logger
+
 if __name__=="__main__":
 
     env_config = get_env_config(".env")
 
     experiment_name = sys.argv[1]
+
+    logger = setup_logger(experiment_name, f"experiments/logs/{experiment_name}", logging.DEBUG)
     
     # # Read configs
     configs_base_dir = f"experiments/configs/{experiment_name}"
@@ -62,46 +67,46 @@ if __name__=="__main__":
 
     # Check to see if database insertion logged
     if not experiment_config.get("vector_store_exists", False):
-        print(f"Vector store does not exist")
+        logger.debug(f"Vector store does not exist")
         # Check to see if embeddings exist already
         if not check_for_embeddings(experiment_config["embeddings_dir"]):
-            print(f"Embeddings not found")
+            logger.debug(f"Embeddings not found")
             # Loop over data files
             embeddings_to_save = []
             data_path = Path(experiment_config["data"])
             for file_path in data_path.rglob("*"):
                 if file_path.is_file():
                     file_path = str(file_path)
-                    print(f"Working on: {file_path}")
+                    logger.debug(f"Working on: {file_path}")
                     parser = parser_router(all_parsers, file_path)
                     parsed_document = parser.parse(file_path)
-                    print(f"Finished parsing")
-                    print(f"Starting chunking")
+                    logger.debug(f"Finished parsing")
+                    logger.debug(f"Starting chunking")
                     chunks = chunker.chunk(parsed_document)
-                    print(f"Finished chunking")
-                    print(f"Starting embedding")
+                    logger.debug(f"Finished chunking")
+                    logger.debug(f"Starting embedding")
                     embeddings = embedder.embed_data(chunks)
                     embeddings_to_save += [embedding for embedding in embeddings]
-                    print(f"Finished embedding")
+                    logger.debug(f"Finished embedding")
                     
             
-            print(f"Saving embeddings")
+            logger.debug(f"Saving embeddings")
             save_embeddings(embeddings_to_save, experiment_config["embeddings_dir"])
             experiment_config["embeddings_saved"] = True
             save_config_yaml(experiment_config, configs_base_dir, "experiment")
         else:
-            print(f"Embeddings found")
+            logger.debug(f"Embeddings found")
             embeddings = load_embeddings(experiment_config["embeddings_dir"])
-            print(f"Loaded embeddings")
+            logger.debug(f"Loaded embeddings")
 
         # Save
-        print(f"Pushing to vector store")
+        logger.debug(f"Pushing to vector store")
         vector_store.store_batch(embeddings, batch_size=10)
-        print(f"Finished pushing to vector store")
+        logger.debug(f"Finished pushing to vector store")
         experiment_config["vector_store_exists"] = True
         save_config_yaml(experiment_config, configs_base_dir, "experiment")
     else:
-        print(f"Vector store exists")
+        logger.debug(f"Vector store exists")
     
     # Get queries
     query_pass = experiment_config["query_pass"]
@@ -115,8 +120,8 @@ if __name__=="__main__":
     response_pass = generator.generate(query_pass, query_pass_docs)
     response_fail = generator.generate(query_fail, query_fail_docs)
     
-    print(f"PASS:")
-    print(response_pass)
+    logger.debug(f"PASS:")
+    logger.debug(response_pass)
 
-    print(f"FAIL:")
-    print(response_fail)
+    logger.debug(f"FAIL:")
+    logger.debug(response_fail)
