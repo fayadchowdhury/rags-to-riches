@@ -196,12 +196,12 @@ def load_embeddings(path: str) -> List[Dict]:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
     
-def save_results_txt(results: str, output_path: str) -> None:
+def save_results_json(results: Dict, output_path: str) -> None:
     '''
     Take output path
-    Save results text file to output path
+    Save results JSON file to output path
     Return None
     '''
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
-        f.write(results)
+        json.dump(results, f, indent=4, ensure_ascii=False)
