@@ -1,6 +1,7 @@
 import logging
 import sys
 from pathlib import Path
+import json
 
 import mlflow
 
@@ -19,7 +20,7 @@ from core.utils.pipeline_utils import (
     save_embeddings,
     load_embeddings,
     save_config_yaml,
-    save_results_txt
+    save_results_json
 )
 
 from core.utils.logging_utils import setup_logger
@@ -128,14 +129,16 @@ if __name__=="__main__":
             logger.debug(f"Vector store exists")
         
         # Get queries
-        query_pass = experiment_config["query_pass"]
-        query_fail = experiment_config["query_fail"]
+        query_pass = experiment_config["query_pass"]["question"]
+        query_pass_gold_docs = experiment_config["query_pass"]["relevant_docs"]
+        query_fail = experiment_config["query_fail"]["question"]
+        query_fail_gold_docs = experiment_config["query_fail"]["relevant_docs"]
         mlflow.log_param("query_pass", query_pass)
         mlflow.log_param("query_fail", query_fail)
 
         # Retrieve documents
-        query_pass_docs = retriever.retrieve(query_pass)
-        query_fail_docs = retriever.retrieve(query_fail)
+        query_pass_doc_names, query_pass_docs = retriever.retrieve(query_pass)
+        query_fail_doc_names, query_fail_docs = retriever.retrieve(query_fail)
 
         # Generate response
         response_pass = generator.generate(query_pass, query_pass_docs)
@@ -147,7 +150,21 @@ if __name__=="__main__":
         logger.debug(f"FAIL:")
         logger.debug(response_fail)
 
-        results_text = f"PASS:\n{response_pass}\n\nFAIL:\n{response_fail}"
-        save_results_txt(results_text, f"experiments/results/{experiment_name}/results.txt")
-        mlflow.log_artifact(f"experiments/results/{experiment_name}/results.txt", artifact_path="results")
+        results = {
+            "pass": {
+                "query": query_pass,
+                "retrieved_doc_names": query_pass_doc_names,
+                "gold_doc_names": query_pass_gold_docs,
+                "response": json.loads(response_pass)
+            },
+            "fail": {
+                "query": query_fail,
+                "retrieved_doc_names": query_fail_doc_names,
+                "gold_doc_names": query_fail_gold_docs,
+                "response": json.loads(response_fail)
+            }
+        }
+        logger.debug(f"Overall results:\n{results}")
+        save_results_json(results, f"experiments/results/{experiment_name}/results.json")
+        mlflow.log_artifact(f"experiments/results/{experiment_name}/results.json", artifact_path="results")
         mlflow.log_artifact(f"experiments/logs/{experiment_name}/{experiment_name}.log", artifact_path="logs")
