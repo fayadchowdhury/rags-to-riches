@@ -26,6 +26,9 @@ from core.retrievers.TopKRetriever import TopKRetriever
 from core.generators.BaseGenerator import BaseGenerator
 from core.generators.OpenAIGenerator import OpenAIGenerator
 
+from core.evaluators.BaseEvaluator import BaseEvaluator
+from core.evaluators.OpenAIEvaluator import OpenAIEvaluator
+
 def get_env_config(path: str) -> Dict:
     '''
     Take path to specified .env file
@@ -168,6 +171,21 @@ def initialize_generator(system_prompt: str, prompt_template: str, generator_con
         generator = OpenAIGenerator(**config)
 
     return generator
+
+def initialize_evaluator(answer_system_prompt: str, answer_prompt_template: str, evaluator_config: Dict) -> BaseEvaluator:
+    '''
+    Take a type and evaluator config
+    Return an evaluator
+    '''
+    evaluator = None
+    config = evaluator_config.get("config", {})
+    type = evaluator_config.get("type", "")
+    config["answer_system_prompt"] = answer_system_prompt
+    config["answer_prompt_template"] = answer_prompt_template
+    if type == "OpenAIEvaluator":
+        evaluator = OpenAIEvaluator(**config)
+
+    return evaluator
 
 def check_for_embeddings(path: str) -> bool:
     '''

@@ -13,6 +13,7 @@ from core.utils.pipeline_utils import (
     initialize_vector_store,
     initialize_retriever,
     initialize_generator,
+    initialize_evaluator,
     parser_router,
     get_env_config,
     read_prompt,
@@ -43,6 +44,7 @@ if __name__=="__main__":
     vector_store_config = load_config_yaml(configs_base_dir, "vector_store")
     retriever_config = load_config_yaml(configs_base_dir, "retriever")
     generator_config = load_config_yaml(configs_base_dir, "generator")
+    evaluator_config = load_config_yaml(configs_base_dir, "evaluator")
     
     # Initialize all parsers
     all_parsers = initialize_all_parsers(parsers_config)
@@ -69,6 +71,14 @@ if __name__=="__main__":
     # Initialize generator
     generator_config["config"]["api_key"] = env_config.get(generator_config["config"].get("api_key", ""), "")
     generator = initialize_generator(system_prompt, prompt_template, generator_config)
+
+    # Read evaluator prompts
+    answer_prompt_template = read_prompt(prompts_base_dir, evaluator_config["config"]["answer_prompt_path"])
+    answer_system_prompt = read_prompt(prompts_base_dir, evaluator_config["config"]["answer_system_prompt_path"])
+
+    # Initialize evaluator
+    evaluator_config["config"]["api_key"] = env_config.get(evaluator_config["config"].get("api_key", ""), "")
+    evaluator = initialize_evaluator(answer_system_prompt, answer_prompt_template, evaluator_config)
 
     # Start MLFlow run
     if mlflow_uri:
@@ -144,10 +154,10 @@ if __name__=="__main__":
         response_pass = generator.generate(query_pass, query_pass_docs)
         response_fail = generator.generate(query_fail, query_fail_docs)
         
-        logger.debug(f"PASS:")
+        logger.debug(f"PASS RESPONSE:")
         logger.debug(response_pass)
 
-        logger.debug(f"FAIL:")
+        logger.debug(f"FAIL RESPONSE:")
         logger.debug(response_fail)
 
         results = {
@@ -168,6 +178,47 @@ if __name__=="__main__":
                 "response": json.loads(response_fail)
             }
         }
+        
+        # Evaluate response
+        precision_pass = evaluator.precision_k(results["pass"]["retrieved_doc_names"], results["pass"]["gold_doc_names"])
+        precision_fail = evaluator.precision_k(results["fail"]["retrieved_doc_names"], results["fail"]["gold_doc_names"])
+        mlflow.log_metric("precision_pass", precision_pass)
+        mlflow.log_metric("precision_fail", precision_fail)
+        logger.debug(f"Precision Pass: {precision_pass}")
+        logger.debug(f"Precision Fail: {precision_fail}")
+
+        recall_pass = evaluator.recall_k(results["pass"]["retrieved_doc_names"], results["pass"]["gold_doc_names"])
+        recall_fail = evaluator.recall_k(results["fail"]["retrieved_doc_names"], results["fail"]["gold_doc_names"])
+        mlflow.log_metric("recall_pass", recall_pass)
+        mlflow.log_metric("recall_fail", recall_fail)
+        logger.debug(f"Recall Pass: {recall_pass}")
+        logger.debug(f"Recall Fail: {recall_fail}")
+
+        f1_pass = evaluator.f1_score(precision_pass, recall_pass)
+        f1_fail = evaluator.f1_score(precision_fail, recall_fail)
+        mlflow.log_metric("f1_pass", f1_pass)
+        mlflow.log_metric("f1_fail", f1_fail)
+        logger.debug(f"F1 Score Pass: {f1_pass}")
+        logger.debug(f"F1 Score Fail: {f1_fail}")
+
+        answer_eval_pass = evaluator.evaluate_answer(results["pass"])
+        answer_eval_fail = evaluator.evaluate_answer(results["fail"])
+        
+        logger.debug(f"PASS ANSWER EVALUATION:")
+        logger.debug(answer_eval_pass)
+
+        logger.debug(f"FAIL ANSWER EVALUTAION:")
+        logger.debug(answer_eval_fail)
+        
+        results["pass"]["answer_evaluation"] = json.loads(answer_eval_pass)
+        results["pass"]["precision"] = precision_pass
+        results["pass"]["recall"] = recall_pass
+        results["pass"]["f1"] = f1_pass
+        results["fail"]["answer_evaluation"] = json.loads(answer_eval_fail)
+        results["fail"]["precision"] = precision_fail
+        results["fail"]["recall"] = recall_fail
+        results["fail"]["f1"] = f1_fail
+
         save_results_json(results, f"experiments/results/{experiment_name}/results.json")
         mlflow.log_artifact(f"experiments/results/{experiment_name}/results.json", artifact_path="results")
         mlflow.log_artifact(f"experiments/logs/{experiment_name}/{experiment_name}.log", artifact_path="logs")
