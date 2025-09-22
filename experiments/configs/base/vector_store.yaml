@@ -1,5 +1,0 @@
-type: PineconeVectorStore
-config:
-  api_key: PINECONE_API_KEY
-  index_name: test-base
-  embedding_dim: 1536

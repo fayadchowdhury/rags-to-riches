@@ -1,5 +1,5 @@
 type: PineconeVectorStore
 config:
   api_key: PINECONE_API_KEY
-  index_name: nlp-material-subset-ada-002
+  index_name: nlp-material-subset-base
   embedding_dim: 1536

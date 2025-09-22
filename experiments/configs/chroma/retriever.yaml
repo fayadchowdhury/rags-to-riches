@@ -1,3 +1,0 @@
-type: TopKRetriever
-config:
-  top_k: 10

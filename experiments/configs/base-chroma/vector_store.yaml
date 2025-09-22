@@ -1,4 +1,4 @@
 type: ChromaVectorStore
 config:
-  persist_directory: data/output/chroma
+  persist_directory: data/output/base-chroma
   collection_name: test-base

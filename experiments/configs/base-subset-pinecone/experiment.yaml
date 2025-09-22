@@ -1,5 +1,0 @@
-data: data/input/subset
-query_pass: Who were the authors behind the GLUE benchmark paper?
-query_fail: What has been different about GPT5 compared to GPT4 and GPT3?
-embeddings_dir: data/output/embeddings/text-embedding-ada-002-subset.json
-vector_store_exists: true
