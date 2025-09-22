@@ -153,18 +153,21 @@ if __name__=="__main__":
         results = {
             "pass": {
                 "query": query_pass,
+                "response": json.loads(response_pass),
                 "retrieved_doc_names": query_pass_doc_names,
+                "retrieved_texts": query_pass_docs,
                 "gold_doc_names": query_pass_gold_docs,
                 "response": json.loads(response_pass)
             },
             "fail": {
                 "query": query_fail,
+                "response": json.loads(response_fail),
                 "retrieved_doc_names": query_fail_doc_names,
+                "retrieved_texts": query_fail_docs,
                 "gold_doc_names": query_fail_gold_docs,
                 "response": json.loads(response_fail)
             }
         }
-        logger.debug(f"Overall results:\n{results}")
         save_results_json(results, f"experiments/results/{experiment_name}/results.json")
         mlflow.log_artifact(f"experiments/results/{experiment_name}/results.json", artifact_path="results")
         mlflow.log_artifact(f"experiments/logs/{experiment_name}/{experiment_name}.log", artifact_path="logs")
