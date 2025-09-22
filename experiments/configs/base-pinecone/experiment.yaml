@@ -2,11 +2,10 @@ data: data/input/subset
 query_pass:
   question: How does Jelinek-Mercer smoothing work?
   relevant_docs:
-    - data/input/subset/lectures/lm.pdf
-    - data/input/subset/qas/midterm-questions-3.pdf
-query_fail: 
+  - data/input/subset/lectures/lm.pdf
+  - data/input/subset/qas/midterm-questions-3.pdf
+query_fail:
   question: How is mT5 pre-trained?
-  relevant_docs:
+  relevant_docs: null
 embeddings_dir: data/output/embeddings/text-embedding-ada-002-subset.json
-embeddings_saved: true
 vector_store_exists: true

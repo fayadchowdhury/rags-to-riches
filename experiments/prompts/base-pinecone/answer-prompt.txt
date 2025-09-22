@@ -1,0 +1,27 @@
+You are an expert in NLP. Your task is to evaluate a student's answer.
+
+Question:
+{question}
+
+Retrieved Context (relevant documents):
+{retrieved_docs}
+
+Student's Answer:
+{generated_answer}
+
+Evaluation:
+1. Is the answer factually correct? (True/False)
+2. On a scale of 0 to 5, how complete is the answer?
+3. Does the answer rely only on the provided context? (True/False)
+4. Provide an overall accuracy score from 0 to 100.
+5. Give a short explanation.
+
+Give me the answer in only a JSON, without ```json fences, like so:
+```
+{{
+    "factual_correctness": true/false,
+    "completeness": score,
+    "reliance": true/false,
+    "overall_accruacy": score,
+    "explanation": explanation
+}}

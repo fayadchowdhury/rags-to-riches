@@ -1,0 +1,7 @@
+type: OpenAIEvaluator
+config:
+  api_key: OPENAI_API_KEY
+  model: gpt-4o-mini
+  temperature: 0
+  answer_system_prompt_path: answer-system
+  answer_prompt_path: answer-prompt
