@@ -29,7 +29,7 @@ from core.generators.OpenAIGenerator import OpenAIGenerator
 from core.evaluators.BaseEvaluator import BaseEvaluator
 from core.evaluators.OpenAIEvaluator import OpenAIEvaluator
 
-def get_env_config(path: str) -> Dict:
+def get_pipeline_env_config(path: str) -> Dict:
     '''
     Take path to specified .env file
     Return dictionary of environment variables

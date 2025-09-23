@@ -15,7 +15,7 @@ from core.utils.pipeline_utils import (
     initialize_generator,
     initialize_evaluator,
     parser_router,
-    get_env_config,
+    get_pipeline_env_config,
     read_prompt,
     check_for_embeddings,
     save_embeddings,
@@ -28,7 +28,7 @@ from core.utils.logging_utils import setup_logger
 
 if __name__=="__main__":
 
-    env_config = get_env_config(".env")
+    env_config = get_pipeline_env_config(".env")
 
     experiment_name = sys.argv[1]
     mlflow_uri = sys.argv[2] if len(sys.argv) > 2 else None
