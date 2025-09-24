@@ -49,7 +49,11 @@ class SQLiteDatabase(BaseDatabase):
             ORDER BY created_at DESC
         ''')
         rows = self.cursor.fetchall()
-        sessions = [dict(session) for session in rows]
+        sessions = [{
+            "id": session[0],
+            "name": session[1],
+            "created_at": session[2]
+        } for session in rows]
         return sessions
 
     def get_session(self, session_id):
@@ -59,7 +63,11 @@ class SQLiteDatabase(BaseDatabase):
         ''', (session_id,))
         row = self.cursor.fetchone()
         if row:
-            return dict(row)
+            return {
+                "id": row[0],
+                "name": row[1],
+                "created_at": row[2]
+            }
         return None
     
     def delete_session(self, session_id):
@@ -81,12 +89,18 @@ class SQLiteDatabase(BaseDatabase):
     
     def get_messages(self, session_id):
         self.cursor.execute('''
-            SELECT id, role, content, created_at FROM messages
+            SELECT id, session_id, role, content, created_at FROM messages
             WHERE session_id = ?
             ORDER BY created_at ASC
         ''', (session_id,))
         rows = self.cursor.fetchall()
-        messages = [dict(message) for message in rows]
+        messages = [{
+            "id": message[0],
+            "session_id": message[1],
+            "role": message[2],
+            "content": message[3],
+            "created_at": message[4]
+        } for message in rows]
         return messages
     
     def delete_messages(self, session_id):
