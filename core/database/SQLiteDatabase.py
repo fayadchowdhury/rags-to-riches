@@ -8,7 +8,7 @@ class SQLiteDatabase(BaseDatabase):
         super().__init__(**kwargs)
         self.db_path = self.config.get("DB_DATABASE", "database.db")
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
-        self.conn = sqlite3.connect(self.db_path)
+        self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.cursor = self.conn.cursor()
         self._create_tables()
 
