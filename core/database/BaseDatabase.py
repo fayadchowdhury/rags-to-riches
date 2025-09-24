@@ -7,7 +7,6 @@ class BaseDatabase(ABC):
         Initialize a database with optional configuration parameters
         '''
         self.config = kwargs
-        print(self.config)
 
     @abstractmethod
     def _create_tables(self):
