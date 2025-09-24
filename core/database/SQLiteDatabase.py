@@ -34,13 +34,14 @@ class SQLiteDatabase(BaseDatabase):
         self.conn.commit()
     
     def save_session(self, session):
+        session_id = session.get("id", str(uuid.uuid4()))
         self.cursor.execute('''
             INSERT OR REPLACE INTO sessions (id, name, updated_at)
             VALUES (?, ?, CURRENT_TIMESTAMP)
-        ''', (str(uuid.uuid4()), session["name"])
+        ''', (session_id, session["name"])
         )
         self.conn.commit()
-        return self.cursor.lastrowid
+        return session_id
     
     def get_all_sessions(self):
         self.cursor.execute('''
@@ -69,13 +70,14 @@ class SQLiteDatabase(BaseDatabase):
         return self.cursor.rowcount
     
     def save_message(self, session_id, message):
+        message_id = message.get("id", str(uuid.uuid4()))
         self.cursor.execute('''
             INSERT INTO messages (id, session_id, role, content)
             VALUES (?, ?, ?, ?)
-        ''', (str(uuid.uuid4()), session_id, message["role"], message["content"])
+        ''', (message_id, session_id, message["role"], message["content"])
         )
         self.conn.commit()
-        return self.cursor.lastrowid
+        return message_id
     
     def get_messages(self, session_id):
         self.cursor.execute('''
