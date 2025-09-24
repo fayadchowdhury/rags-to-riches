@@ -217,3 +217,7 @@ experiments/results/
 # MLFlow
 mlruns/
 mlartifacts/
+
+# App
+database/
+logs/
