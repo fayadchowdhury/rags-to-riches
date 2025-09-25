@@ -12,6 +12,9 @@ def get_app_env_config(path: str) -> Dict:
     '''
     load_dotenv(path)
     return {
+        "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY", ""),
+        "PINECONE_API_KEY": os.environ.get("PINECONE_API_KEY", ""),
+        "PINECONE_INDEX_NAME": os.environ.get("PINECONE_INDEX_NAME", ""),
         "DB_HOST": os.environ.get("DB_HOST", ""),
         "DB_PORT": os.environ.get("DB_PORT", ""),
         "DB_DATABASE": os.environ.get("DB_DATABASE", ""),
