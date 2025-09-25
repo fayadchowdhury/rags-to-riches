@@ -25,7 +25,7 @@ def initialize_database(db_config: Dict) -> BaseDatabase:
     Return a database
     '''
     database = None
-    type = db_config.get("type", "")
+    type = db_config.get("db_type", "")
     if type == "SQLiteDatabase":
         database = SQLiteDatabase(**db_config)
 

@@ -82,7 +82,7 @@ def main():
     logger.debug(f"Starting main function with session_state: {st.session_state}")
     # Read app environment variables 
     app_config = get_app_env_config(".env")
-    app_config["type"] = "SQLiteDatabase"
+    app_config["db_type"] = "SQLiteDatabase"
     logger.debug(f"App config: {app_config}")
     
     # Initialize db and create tables
