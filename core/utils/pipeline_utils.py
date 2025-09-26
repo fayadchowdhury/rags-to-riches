@@ -172,6 +172,19 @@ def initialize_generator(system_prompt: str, prompt_template: str, generator_con
 
     return generator
 
+def initialize_generator_app(generator_config: Dict) -> BaseGenerator:
+    '''
+    Take a type and generator config
+    Return a generator
+    '''
+    generator = None
+    config = generator_config.get("config", {})
+    type = generator_config.get("type", "")
+    if type == "OpenAIGenerator":
+        generator = OpenAIGenerator(**config)
+
+    return generator
+
 def initialize_evaluator(answer_system_prompt: str, answer_prompt_template: str, evaluator_config: Dict) -> BaseEvaluator:
     '''
     Take a type and evaluator config
