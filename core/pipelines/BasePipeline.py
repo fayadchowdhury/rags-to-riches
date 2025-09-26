@@ -44,7 +44,7 @@ class BasePipeline(ABC):
         '''
         pass
 
-    def query(self, query: str) -> str:
+    def query(self, prompt_template: str, query: str) -> str:
         '''
         Take a query string
         Return the output string
