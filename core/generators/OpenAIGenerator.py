@@ -35,3 +35,19 @@ class OpenAIGenerator(BaseGenerator):
 
         answer = response.choices[0].message.content
         return answer
+    
+    def generate_stream(self, query):
+        with self.client.responses.stream(
+            model=self.model,
+            input=[
+                {
+                    "role": "user",
+                    "content": query
+                }
+            ]
+        ) as stream:
+            for event in stream:
+                if event.type == "response.output_text.delta":
+                    token = event.delta
+                    yield token
+            stream.close()
