@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Iterator
 
 class BaseGenerator(ABC):
     '''
@@ -16,5 +17,12 @@ class BaseGenerator(ABC):
         '''
         Take a query and a context to pass to LLM
         Return the output string
+        '''
+        pass
+
+    @abstractmethod
+    def generate_stream(self, query: str) -> Iterator[str]:
+        '''
+        Take a query to pass to LLM 
         '''
         pass
