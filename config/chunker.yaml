@@ -1,0 +1,4 @@
+type: FixedTokenSizeChunker
+config:
+  max_tokens: 512
+  overlap: 50
