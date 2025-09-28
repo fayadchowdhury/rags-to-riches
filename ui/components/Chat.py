@@ -2,7 +2,6 @@ from typing import Dict, Callable
 import streamlit as st
 
 from ui.components.ChatMessage import ChatMessage
-from ui.components.Input import Input
 
 class Chat:
     def __init__(self, session: Dict, handle_prompt_submit: Callable):
@@ -11,9 +10,13 @@ class Chat:
         pass
 
     def render(self):
-        Input(self.handle_prompt_submit).render()
-    
         st.markdown(f"## Chat Session: {self.session['name']}")
+    
         for message in self.session.get("messages", []):
             ChatMessage(message).render()
-    
+
+        if user_input := st.chat_input("Type your message here..."):
+            with st.chat_message("user"):
+                st.markdown(user_input)
+
+            self.handle_prompt_submit(user_input)

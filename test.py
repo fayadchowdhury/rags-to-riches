@@ -4,35 +4,40 @@ from datetime import datetime
 
 from ui.components.Sidebar import Sidebar
 from ui.components.Chat import Chat
+from ui.components.ChatMessage import ChatMessage
 
 from ui.functions.messages import get_messages_for_session_from_db, save_message_for_session_to_db, delete_messages_for_session_from_db
 from ui.functions.sessions import get_session_from_db, get_sessions_from_db, create_new_session, save_session_to_db
 
 from core.utils.app_utils import initialize_database, get_app_env_config
+from core.utils.pipeline_utils import load_config_yaml, initialize_all_parsers, initialize_chunker, initialize_embedder, initialize_vector_store, initialize_retriever, initialize_generator_app
 from core.utils.logging_utils import setup_logger
+
+from core.pipelines.UIPipeline import UIPipeline
 
 logger = setup_logger("app", "logs", logging.DEBUG)
 
-def handle_prompt_submit(db, prompt: str):
-    query = {
-        "role": "user",
-        "content": prompt,
-    }
-    
-    reply = {
-        "role": "assistant",
-        "content": f"Echo: {prompt}",
-    }
-    st.session_state["current_session"]["messages"].append(query)
-    st.session_state["current_session"]["messages"].append(reply)
-    logger.debug(f"Appended new messages to current_session in session_state")
+def handle_prompt_submit(db, pipeline, prompt: str):
+    query = {"role": "user", "content": prompt}
+    logger.debug(f"Saving to db user query:\n{query}")
     save_message_for_session_to_db(db, st.session_state["current_session"]["id"], query)
+    st.session_state["current_session"]["messages"].append(query)
+    logger.debug(f"Saved query to db for session id: {st.session_state['current_session']['id']}")
+
+    prompt_template = "{query}:\n\n{context}:\n\n"
+    response_stream = pipeline.query(prompt_template, prompt)
+    logger.debug(f"Sending query to LLM to stream response")
+    response = ChatMessage.render_stream(response_stream)
+
+    reply = {"role": "assistant", "content": response}
+    logger.debug(f"Done streaming response:\n{reply}")
     save_message_for_session_to_db(db, st.session_state["current_session"]["id"], reply)
-    logger.debug(f"Saved new messages to db for session id: {st.session_state['current_session']['id']}")
+    st.session_state["current_session"]["messages"].append(reply)
+
+    logger.debug(f"Saved response to db for session id: {st.session_state['current_session']['id']}")
 
 
 def handle_new_chat_click(db):
-    logger.debug(f"Clicked new chat button")
     logger.debug(f"Creating new session")
     new_session = create_new_session(f"Session @ {datetime.now().strftime("%H:%M:%S-%d-%m-%Y")}") # Need to figure this out somehow, maybe update with summary of first query??
     session_id = save_session_to_db(db, new_session)
@@ -49,7 +54,6 @@ def handle_new_chat_click(db):
     logger.debug(f"Done")
 
 def handle_session_click(db, session):
-    logger.debug(f"Clicked on session: {session['name']}")
     logger.debug(f"Fetching session {session["name"]} with id: {session["id"]}")
     new_session = get_session_from_db(db, session["id"])
     messages = get_messages_for_session_from_db(db, session["id"])
@@ -66,7 +70,6 @@ def handle_session_click(db, session):
 
 
 def handle_clear_chat_click(db, session_id):
-    logger.debug(f"Clicked clear chat button")
     logger.debug(f"Deleting all messages in chat from database")
     delete_messages_for_session_from_db(db, session_id)
     logger.debug(f"Deleted messages")
@@ -80,11 +83,59 @@ def handle_clear_chat_click(db, session_id):
 
 def main():
     logger.debug(f"Starting main function with session_state: {st.session_state}")
+    
     # Read app environment variables 
     app_config = get_app_env_config(".env")
     app_config["db_type"] = "SQLiteDatabase"
     logger.debug(f"App config: {app_config}")
+
+    # Read configs
+    logger.debug(f"Reading config YAMLs from configs directory")
+    configs_base_dir = f"config/"
+    parsers_config = load_config_yaml(configs_base_dir, "parsers")
+    chunker_config = load_config_yaml(configs_base_dir, "chunker")
+    embedder_config = load_config_yaml(configs_base_dir, "embedder")
+    vector_store_config = load_config_yaml(configs_base_dir, "vector_store")
+    retriever_config = load_config_yaml(configs_base_dir, "retriever")
+    generator_config = load_config_yaml(configs_base_dir, "generator")
     
+    logger.debug(f"Initializing components - parsers, chunker, embedder, vector_store, retriever, generator")
+    # Initialize all parsers
+    all_parsers = initialize_all_parsers(parsers_config)
+
+    # Initialize chunker
+    chunker = initialize_chunker(chunker_config)
+
+    # Initialize embedder
+    embedder_config["config"]["api_key"] = app_config.get(embedder_config["config"].get("api_key", ""), "")
+    embedder = initialize_embedder(embedder_config)
+
+    # Initialize vector store
+    vector_store_config["config"]["api_key"] = app_config.get(vector_store_config["config"].get("api_key", ""), "")
+    vector_store = initialize_vector_store(vector_store_config)
+
+    # Initialize retriever
+    retriever = initialize_retriever(embedder, vector_store, retriever_config)
+    
+    # Initialize generator
+    generator_config["config"]["api_key"] = app_config.get(generator_config["config"].get("api_key", ""), "")
+    generator = initialize_generator_app(generator_config)
+
+    # Initialize pipeline
+    if not "pipeline" in st.session_state:
+        logger.debug(f"No pipeline found; initializing and saving to session_state")
+        pipeline = UIPipeline(
+            all_parsers,
+            chunker,
+            embedder,
+            vector_store,
+            retriever,
+            generator
+        )
+        st.session_state["pipeline"] = pipeline
+    else:
+        logger.debug(f"Using pipeline with:\n{st.session_state["pipeline"].list_components()}")
+
     # Initialize db and create tables
     db = initialize_database(app_config)
     db._create_tables()
@@ -158,7 +209,7 @@ def main():
     logger.debug(f"Rendering Chat component with session: {st.session_state['current_session']}")
     chat = Chat(
         session=st.session_state["current_session"],
-        handle_prompt_submit=lambda prompt: handle_prompt_submit(db, prompt)
+        handle_prompt_submit=lambda prompt: handle_prompt_submit(db, st.session_state["pipeline"], prompt)
     )
     chat.render()
     
