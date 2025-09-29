@@ -124,7 +124,7 @@ class SQLiteDatabase(BaseDatabase):
         self.cursor.execute('''
             INSERT INTO summaries (id, session_id, summary)
             VALUES (?, ?, ?)
-        ''', (summary_id, session_id, summary["text"]))
+        ''', (summary_id, session_id, summary))
         self.conn.commit()
         return summary_id
 
