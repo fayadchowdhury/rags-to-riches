@@ -65,6 +65,20 @@ class BaseDatabase(ABC):
         pass
 
     @abstractmethod
+    def save_summary(self, session_id: str, summary: Dict):
+        '''
+        Save summmary of a chat session
+        '''
+        pass
+
+    @abstractmethod
+    def get_summary(self, session_id: str) -> Dict:
+        '''
+        Retrieve summary of a chat session
+        '''
+        pass
+
+    @abstractmethod
     def close(self):
         '''
         Close the database connection

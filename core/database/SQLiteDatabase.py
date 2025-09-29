@@ -31,6 +31,15 @@ class SQLiteDatabase(BaseDatabase):
                 FOREIGN KEY(session_id) REFERENCES sessions(id)
             )
         ''')
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS summaries (
+                id TEXT PRIMARY KEY,
+                session_id TEXT,
+                summary TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
         self.conn.commit()
     
     def save_session(self, session):
@@ -109,6 +118,30 @@ class SQLiteDatabase(BaseDatabase):
         ''', (session_id,))
         self.conn.commit()
         return self.cursor.rowcount
+    
+    def save_summary(self, session_id, summary):
+        summary_id = summary.get("id", str(uuid.uuid4()))
+        self.cursor.execute('''
+            INSERT INTO summaries (id, session_id, summary)
+            VALUES (?, ?, ?, ?)
+        ''', summary_id, session_id, summary["text"])
+        self.conn.commit()
+        return summary_id
+
+    def get_summary(self, session_id):
+        self.cursor.execute('''
+            SELECT id, session_id, summary, created_at, updated_at
+            FROM summaries WHERE session_id = ?
+        ''', (session_id,))
+        row =  self.cursor.fetchone()
+        summary = {
+            "id": row[0],
+            "session_id": row[1],
+            "summary": row[2],
+            "created_at": row[3],
+            "updated_at": row[4],
+        }
+        return summary
 
     def close(self):
         self.conn.close()

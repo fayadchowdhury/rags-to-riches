@@ -7,7 +7,7 @@ from ui.components.Chat import Chat
 from ui.components.ChatMessage import ChatMessage
 
 from ui.functions.messages import get_messages_for_session_from_db, save_message_for_session_to_db, delete_messages_for_session_from_db
-from ui.functions.sessions import get_session_from_db, get_sessions_from_db, create_new_session, save_session_to_db
+from ui.functions.sessions import get_session_from_db, get_sessions_from_db, create_new_session, save_session_to_db, get_chat_history
 
 from core.utils.app_utils import initialize_database, get_app_env_config
 from core.utils.pipeline_utils import load_config_yaml, initialize_all_parsers, initialize_chunker, initialize_embedder, initialize_vector_store, initialize_retriever, initialize_generator_app
@@ -16,24 +16,6 @@ from core.utils.logging_utils import setup_logger
 from core.pipelines.UIPipeline import UIPipeline
 
 logger = setup_logger("app", "logs", logging.DEBUG)
-
-def get_chat_history(messages, token_limit):
-    token_count = 0
-    history = []
-    for message in reversed(messages):
-        content = message["content"]
-        role = message["role"]
-        token_count += len(content.split())
-        # Check to see if within token_limit
-        if token_count > token_limit:
-            logger.debug(f"Exceeding token count, stopping history here")
-            break
-        else:
-            history.append({
-                "role": role,
-                "content": content
-            })
-    return [c for c in reversed(history)]
 
 
 def handle_prompt_submit(db, pipeline, prompt: str):

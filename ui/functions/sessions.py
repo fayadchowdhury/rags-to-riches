@@ -1,3 +1,4 @@
+from typing import List, Dict
 from core.database.BaseDatabase import BaseDatabase
 
 def get_session_from_db(db: BaseDatabase, session_id: str):
@@ -16,6 +17,31 @@ def create_new_session(name: str):
         "messages": []
     }
 
-def save_session_to_db(db: BaseDatabase, session: dict):
+def save_session_to_db(db: BaseDatabase, session: Dict):
     session_id = db.save_session(session)
     return session_id
+
+def get_chat_history(messages: List[Dict], token_limit: int):
+    token_count = 0
+    history = []
+    for message in reversed(messages):
+        content = message["content"]
+        role = message["role"]
+        token_count += len(content.split())
+        # Check to see if within token_limit
+        if token_count > token_limit:
+            break
+        else:
+            history.append({
+                "role": role,
+                "content": content
+            })
+    return [c for c in reversed(history)]
+
+def get_summary_from_db(db: BaseDatabase, session_id: str) -> Dict:
+    summary = db.get_summary(session_id)
+    return summary
+
+def save_summary_to_db(db: BaseDatabase, session_id: str, summary: str):
+    summary_id = db.save_summary(session_id, summary)
+    return summary_id
