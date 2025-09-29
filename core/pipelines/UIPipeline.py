@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import List, Dict, Any
 
 from core.pipelines.BasePipeline import BasePipeline
 
@@ -43,3 +43,15 @@ class UIPipeline(BasePipeline):
         Takes a config dictionary
         '''
         self.config.update(new_config)
+
+    def summarize_session(self, messages: List[Dict]) -> Dict:
+        '''
+        Take a list of messages
+        Return a summary
+        '''
+        query = ""
+        for message in messages:
+            query += f"{message["role"]}: {message["content"]}\n\n"
+
+        query += "Summarize the conversation thus far in less than 300 words, keeping track of what the user said and what the assistant responded with"
+        return self.generator.generate(query, "")
