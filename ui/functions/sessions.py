@@ -42,6 +42,6 @@ def get_summary_from_db(db: BaseDatabase, session_id: str) -> Dict:
     summary = db.get_summary(session_id)
     return summary
 
-def save_summary_to_db(db: BaseDatabase, session_id: str, summary: str):
+def save_summary_to_db(db: BaseDatabase, session_id: str, summary: Dict):
     summary_id = db.save_summary(session_id, summary)
     return summary_id
