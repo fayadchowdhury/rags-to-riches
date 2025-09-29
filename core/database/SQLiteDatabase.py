@@ -123,8 +123,8 @@ class SQLiteDatabase(BaseDatabase):
         summary_id = summary.get("id", str(uuid.uuid4()))
         self.cursor.execute('''
             INSERT INTO summaries (id, session_id, summary)
-            VALUES (?, ?, ?, ?)
-        ''', summary_id, session_id, summary["text"])
+            VALUES (?, ?, ?)
+        ''', (summary_id, session_id, summary["text"]))
         self.conn.commit()
         return summary_id
 
@@ -134,14 +134,16 @@ class SQLiteDatabase(BaseDatabase):
             FROM summaries WHERE session_id = ?
         ''', (session_id,))
         row =  self.cursor.fetchone()
-        summary = {
-            "id": row[0],
-            "session_id": row[1],
-            "summary": row[2],
-            "created_at": row[3],
-            "updated_at": row[4],
-        }
-        return summary
+        if row:
+            summary = {
+                "id": row[0],
+                "session_id": row[1],
+                "summary": row[2],
+                "created_at": row[3],
+                "updated_at": row[4],
+            }
+            return summary
+        return None
 
     def close(self):
         self.conn.close()
