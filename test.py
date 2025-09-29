@@ -8,12 +8,10 @@ from ui.components.ChatMessage import ChatMessage
 
 from ui.functions.messages import get_messages_for_session_from_db, save_message_for_session_to_db, delete_messages_for_session_from_db
 from ui.functions.sessions import get_session_from_db, get_sessions_from_db, create_new_session, save_session_to_db, get_chat_history
+from ui.functions.pipeline import setup_pipeline
 
 from core.utils.app_utils import initialize_database, get_app_env_config
-from core.utils.pipeline_utils import load_config_yaml, initialize_all_parsers, initialize_chunker, initialize_embedder, initialize_vector_store, initialize_retriever, initialize_generator_app
 from core.utils.logging_utils import setup_logger
-
-from core.pipelines.UIPipeline import UIPipeline
 
 logger = setup_logger("app", "logs", logging.DEBUG)
 
@@ -94,49 +92,10 @@ def main():
     app_config["db_type"] = "SQLiteDatabase"
     logger.debug(f"App config: {app_config}")
 
-    # Read configs
-    logger.debug(f"Reading config YAMLs from configs directory")
-    configs_base_dir = f"config/"
-    parsers_config = load_config_yaml(configs_base_dir, "parsers")
-    chunker_config = load_config_yaml(configs_base_dir, "chunker")
-    embedder_config = load_config_yaml(configs_base_dir, "embedder")
-    vector_store_config = load_config_yaml(configs_base_dir, "vector_store")
-    retriever_config = load_config_yaml(configs_base_dir, "retriever")
-    generator_config = load_config_yaml(configs_base_dir, "generator")
-    
-    logger.debug(f"Initializing components - parsers, chunker, embedder, vector_store, retriever, generator")
-    # Initialize all parsers
-    all_parsers = initialize_all_parsers(parsers_config)
-
-    # Initialize chunker
-    chunker = initialize_chunker(chunker_config)
-
-    # Initialize embedder
-    embedder_config["config"]["api_key"] = app_config.get(embedder_config["config"].get("api_key", ""), "")
-    embedder = initialize_embedder(embedder_config)
-
-    # Initialize vector store
-    vector_store_config["config"]["api_key"] = app_config.get(vector_store_config["config"].get("api_key", ""), "")
-    vector_store = initialize_vector_store(vector_store_config)
-
-    # Initialize retriever
-    retriever = initialize_retriever(embedder, vector_store, retriever_config)
-    
-    # Initialize generator
-    generator_config["config"]["api_key"] = app_config.get(generator_config["config"].get("api_key", ""), "")
-    generator = initialize_generator_app(generator_config)
-
     # Initialize pipeline
     if not "pipeline" in st.session_state:
         logger.debug(f"No pipeline found; initializing and saving to session_state")
-        pipeline = UIPipeline(
-            all_parsers,
-            chunker,
-            embedder,
-            vector_store,
-            retriever,
-            generator
-        )
+        pipeline = setup_pipeline(app_config, "config")
         st.session_state["pipeline"] = pipeline
     else:
         logger.debug(f"Using pipeline with:\n{st.session_state["pipeline"].list_components()}")
