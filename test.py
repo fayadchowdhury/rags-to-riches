@@ -17,6 +17,25 @@ from core.pipelines.UIPipeline import UIPipeline
 
 logger = setup_logger("app", "logs", logging.DEBUG)
 
+def get_chat_history(messages, token_limit):
+    token_count = 0
+    history = []
+    for message in reversed(messages):
+        content = message["content"]
+        role = message["role"]
+        token_count += len(content.split())
+        # Check to see if within token_limit
+        if token_count > token_limit:
+            logger.debug(f"Exceeding token count, stopping history here")
+            break
+        else:
+            history.append({
+                "role": role,
+                "content": content
+            })
+    return [c for c in reversed(history)]
+
+
 def handle_prompt_submit(db, pipeline, prompt: str):
     query = {"role": "user", "content": prompt}
     logger.debug(f"Saving to db user query:\n{query}")
@@ -24,8 +43,10 @@ def handle_prompt_submit(db, pipeline, prompt: str):
     st.session_state["current_session"]["messages"].append(query)
     logger.debug(f"Saved query to db for session id: {st.session_state['current_session']['id']}")
 
+    history = get_chat_history(st.session_state["current_session"]["messages"], token_limit=5000)
+
     prompt_template = "{query}:\n\n{context}:\n\n"
-    response_stream = pipeline.query(prompt_template, prompt)
+    response_stream = pipeline.query(prompt_template, prompt, history)
     logger.debug(f"Sending query to LLM to stream response")
     response = ChatMessage.render_stream(response_stream)
 
@@ -35,6 +56,8 @@ def handle_prompt_submit(db, pipeline, prompt: str):
     st.session_state["current_session"]["messages"].append(reply)
 
     logger.debug(f"Saved response to db for session id: {st.session_state['current_session']['id']}")
+
+    logger.debug(f"Chat context: {get_chat_history(st.session_state["current_session"]["messages"], token_limit=1500)}")
 
 
 def handle_new_chat_click(db):

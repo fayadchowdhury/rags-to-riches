@@ -36,10 +36,10 @@ class OpenAIGenerator(BaseGenerator):
         answer = response.choices[0].message.content
         return answer
     
-    def generate_stream(self, query):
+    def generate_stream(self, history, query):
         with self.client.responses.stream(
             model=self.model,
-            input=[
+            input=history + [
                 {
                     "role": "user",
                     "content": query
