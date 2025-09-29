@@ -1,5 +1,5 @@
-from abc import ABC
-from typing import Any, List
+from abc import ABC, abstractmethod
+from typing import Any, List, Dict
 
 from core.parsers.BaseParser import BaseParser
 from core.chunkers.BaseChunker import BaseChunker
@@ -32,18 +32,21 @@ class BasePipeline(ABC):
         self.generator = generator
         self.config = kwargs
 
+    @abstractmethod
     def ingest_object(self, obj: Any):
         '''
         Ingest a single object into pipeline
         '''
         pass
 
+    @abstractmethod
     def ingest_objects_from_directory(self, directory: str):
         '''
         Ingest all objects in directory into pipeline
         '''
         pass
 
+    @abstractmethod
     def query(self, prompt_template: str, query: str) -> str:
         '''
         Take a query string
