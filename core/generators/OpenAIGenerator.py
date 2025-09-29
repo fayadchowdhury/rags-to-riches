@@ -37,14 +37,15 @@ class OpenAIGenerator(BaseGenerator):
         return answer
     
     def generate_stream(self, history, query):
+        input = history + [
+            {
+                "role": "user",
+                "content": query
+            }
+        ]
         with self.client.responses.stream(
             model=self.model,
-            input=history + [
-                {
-                    "role": "user",
-                    "content": query
-                }
-            ]
+            input=input
         ) as stream:
             for event in stream:
                 if event.type == "response.output_text.delta":
