@@ -62,3 +62,13 @@ class UIPipeline(BasePipeline):
 
         query += "Summarize the conversation thus far in less than 300 words, keeping track of what the user said and what the assistant responded with"
         return self.generator.generate(query, "")
+    
+    def generate_title(self, prompt: str) -> Dict:
+        query = """
+            Make a 5 word long title for the chat based on this first prompt.
+
+            {prompt}
+
+            Return only the title, and nothing else.
+        """.format(prompt=prompt)
+        return self.generator.generate(query, "")
