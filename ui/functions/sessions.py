@@ -18,8 +18,8 @@ def create_new_session(name: str):
     }
 
 def save_session_to_db(db: BaseDatabase, session: Dict):
-    session_id = db.save_session(session)
-    return session_id
+    session = db.save_session(session)
+    return session
 
 def get_chat_history(messages: List[Dict], token_limit: int):
     token_count = 0
@@ -43,5 +43,5 @@ def get_summary_from_db(db: BaseDatabase, session_id: str) -> Dict:
     return summary
 
 def save_summary_to_db(db: BaseDatabase, session_id: str, summary: Dict):
-    summary_id = db.save_summary(session_id, summary)
-    return summary_id
+    summary = db.save_summary(session_id, summary)
+    return summary

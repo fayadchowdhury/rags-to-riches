@@ -7,8 +7,8 @@ def get_messages_for_session_from_db(db: BaseDatabase, session_id: str):
     return messages
 
 def save_message_for_session_to_db(db: BaseDatabase, session_id: str, message: dict):
-    message_id = db.save_message(session_id, message)
-    return message_id
+    message = db.save_message(session_id, message)
+    return message
 
 def delete_messages_for_session_from_db(db: BaseDatabase, session_id: str):
     db.delete_messages(session_id)

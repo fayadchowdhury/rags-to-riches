@@ -47,10 +47,20 @@ class SQLiteDatabase(BaseDatabase):
         self.cursor.execute('''
             INSERT OR REPLACE INTO sessions (id, name, updated_at)
             VALUES (?, ?, CURRENT_TIMESTAMP)
+            RETURNING *
         ''', (session_id, session["name"])
         )
+        row = self.cursor.fetchone()
         self.conn.commit()
-        return session_id
+        if row:
+            session = {
+                "id": row[0],
+                "name": row[1],
+                "created_at": row[2],
+                "updated_at": row[3]
+            }
+            return session
+        return None
     
     def get_all_sessions(self):
         self.cursor.execute('''
@@ -91,10 +101,20 @@ class SQLiteDatabase(BaseDatabase):
         self.cursor.execute('''
             INSERT INTO messages (id, session_id, role, content)
             VALUES (?, ?, ?, ?)
+            RETURNING *
         ''', (message_id, session_id, message["role"], message["content"])
         )
+        row = self.cursor.fetchone()
         self.conn.commit()
-        return message_id
+        if row:
+            message = {
+                "id": row[0],
+                "session_id": row[1],
+                "role": row[2],
+                "content": row[3],
+                "created_at": row[4]
+            }
+        return None
     
     def get_messages(self, session_id):
         self.cursor.execute('''
@@ -124,9 +144,20 @@ class SQLiteDatabase(BaseDatabase):
         self.cursor.execute('''
             INSERT INTO summaries (id, session_id, summary)
             VALUES (?, ?, ?)
+            RETURNING *
         ''', (summary_id, session_id, summary["text"]))
+        row = self.cursor.fetchone()
         self.conn.commit()
-        return summary_id
+        if row:
+            summary = {
+                "id": row[0],
+                "session_id": row[1],
+                "summary": row[2],
+                "created_at": row[3],
+                "updated_at": row[4]
+            }
+            return summary
+        return None
 
     def get_summary(self, session_id):
         self.cursor.execute('''
