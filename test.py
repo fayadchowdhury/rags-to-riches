@@ -7,7 +7,7 @@ from ui.components.Chat import Chat
 from ui.components.ChatMessage import ChatMessage
 
 from ui.functions.messages import get_messages_for_session_from_db, save_message_for_session_to_db, delete_messages_for_session_from_db
-from ui.functions.sessions import get_session_from_db, get_sessions_from_db, create_new_session, save_session_to_db, get_chat_history
+from ui.functions.sessions import get_session_from_db, get_sessions_from_db, create_new_session, save_session_to_db, get_chat_history, save_summary_to_db, get_summary_from_db
 from ui.functions.pipeline import setup_pipeline
 
 from core.utils.app_utils import initialize_database, get_app_env_config
@@ -16,28 +16,80 @@ from core.utils.logging_utils import setup_logger
 logger = setup_logger("app", "logs", logging.DEBUG)
 
 
+def generate_summary(db, pipeline):
+    # Check to see if summary exists
+    logger.debug(f"Checking to see if summary exists for session: {st.session_state["current_session"]["id"]}")
+    summary_text = ""
+    summary_from_db = get_summary_from_db(db, st.session_state["current_session"]["id"])
+    history = get_chat_history(st.session_state["current_session"]["messages"], token_limit=10000)
+    if summary_from_db:
+        logger.debug(f"Summary found:\n {summary_from_db}")
+        summary_text = summary_from_db["summary"]
+    else:
+        logger.debug(f"Summary not found, generating summary from history")
+        summary_text = pipeline.summarize_session(history)
+        logger.debug(f"Generated summary from history: {summary_text}")
+        summary_for_db = {
+            "text": summary_text
+        }
+        summary_from_db = save_summary_to_db(db, st.session_state["current_session"]["id"], summary_for_db)
+        logger.debug(f"Saved summary to db")
+
+    # Check to see whether summary is stale or not based on number of messages from last update
+    logger.debug(f"Summary last updated in db at: {summary_from_db["updated_at"]}")
+    messages_since_last_update = [h for h in history if h["created_at"] > summary_from_db["updated_at"]]
+    logger.debug(f"Accumulated {len(messages_since_last_update)} messages since last update to summary")
+    if len(messages_since_last_update) > 100:
+        logger.debug(f"Generating new summary")
+        history = [
+            {
+                "role": "user",
+                "content": summary_from_db["summary"]
+            }
+        ] + [
+            {
+                "role": m["role"],
+                "content": m["content"]
+            }
+            for m in messages_since_last_update
+        ]
+        summary_text = pipeline.summarize_session(history)
+        logger.debug(f"Generated summary from history: {summary_text}")
+        summary_for_db = summary_from_db
+        summary_for_db["text"] = summary_text
+        summary_from_db = save_summary_to_db(db, st.session_state["current_session"]["id"], summary_for_db)
+        logger.debug(f"Saved summary to db")
+
+    return pipeline.summarize_session(history)
+
+
 def handle_prompt_submit(db, pipeline, prompt: str):
     query = {"role": "user", "content": prompt}
     logger.debug(f"Saving to db user query:\n{query}")
-    save_message_for_session_to_db(db, st.session_state["current_session"]["id"], query)
-    st.session_state["current_session"]["messages"].append(query)
+    query_to_db = save_message_for_session_to_db(db, st.session_state["current_session"]["id"], query)
+    st.session_state["current_session"]["messages"].append(query_to_db)
     logger.debug(f"Saved query to db for session id: {st.session_state['current_session']['id']}")
 
-    history = get_chat_history(st.session_state["current_session"]["messages"], token_limit=5000)
+    summary_text = generate_summary(db, pipeline)
+    
+    summary = [
+        {
+            "role": "user",
+            "content": summary_text
+        }
+    ]
 
     prompt_template = "{query}:\n\n{context}:\n\n"
-    response_stream = pipeline.query(prompt_template, prompt, history)
-    logger.debug(f"Sending query to LLM to stream response")
+    response_stream = pipeline.query(prompt_template, prompt, summary)
+    logger.debug(f"Sending query and summary to LLM to stream response:\n\nQuery:\n{query}\n\nSummary:\n{summary}")
     response = ChatMessage.render_stream(response_stream)
 
     reply = {"role": "assistant", "content": response}
     logger.debug(f"Done streaming response:\n{reply}")
-    save_message_for_session_to_db(db, st.session_state["current_session"]["id"], reply)
-    st.session_state["current_session"]["messages"].append(reply)
+    reply_to_db = save_message_for_session_to_db(db, st.session_state["current_session"]["id"], reply)
+    st.session_state["current_session"]["messages"].append(reply_to_db)
 
     logger.debug(f"Saved response to db for session id: {st.session_state['current_session']['id']}")
-
-    logger.debug(f"Chat context: {get_chat_history(st.session_state["current_session"]["messages"], token_limit=1500)}")
 
 
 def handle_new_chat_click(db):
@@ -55,6 +107,7 @@ def handle_new_chat_click(db):
     st.session_state["current_session"] = new_session
     st.session_state["messages"] = messages
     logger.debug(f"Done")
+
 
 def handle_session_click(db, session):
     logger.debug(f"Fetching session {session["name"]} with id: {session["id"]}")
@@ -83,7 +136,7 @@ def handle_clear_chat_click(db, session_id):
     st.session_state["messages"] = messages
 
 
-
+# Main flow
 def main():
     logger.debug(f"Starting main function with session_state: {st.session_state}")
     
@@ -139,10 +192,10 @@ def main():
         logger.debug(f"Current session set to: {st.session_state['current_session']}")
         
         # Save current session to db and update id in current_session
-        session_id = save_session_to_db(db, st.session_state["current_session"])
-        logger.debug(f"Saved current_session to db with id: {session_id}")
-        st.session_state["current_session"]["id"] = session_id
-        st.session_state["sessions"][0]["id"] = session_id
+        session = save_session_to_db(db, st.session_state["current_session"])
+        logger.debug(f"Saved current_session to db with id: {session["id"]}")
+        st.session_state["current_session"]["id"] = session["id"]
+        st.session_state["sessions"][0]["id"] = session["id"]
         logger.debug(f"Updated current_session and sessions[0] in session_state with id: {st.session_state['current_session']['id']}")
         
 
@@ -158,6 +211,10 @@ def main():
             logger.debug(f"Loaded {len(messages)} messages for current_session")
             st.session_state["current_session"]["messages"] = messages
             st.session_state["messages_loaded"] = True
+
+        # Update summary
+        logger.debug(f"Generating summary at start-up")
+        generate_summary(db, st.session_state["pipeline"])
 
     # Render sidebar component (new chat button, session buttons, clear chat button)
     logger.debug(f"Rendering Sidebar component with sessions: {st.session_state['sessions']}")

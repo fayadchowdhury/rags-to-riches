@@ -27,6 +27,7 @@ def get_chat_history(messages: List[Dict], token_limit: int):
     for message in reversed(messages):
         content = message["content"]
         role = message["role"]
+        created_at = message["created_at"]
         token_count += len(content.split())
         # Check to see if within token_limit
         if token_count > token_limit:
@@ -34,7 +35,8 @@ def get_chat_history(messages: List[Dict], token_limit: int):
         else:
             history.append({
                 "role": role,
-                "content": content
+                "content": content,
+                "created_at": created_at
             })
     return [c for c in reversed(history)]
 
