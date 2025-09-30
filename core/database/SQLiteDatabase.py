@@ -114,6 +114,7 @@ class SQLiteDatabase(BaseDatabase):
                 "content": row[3],
                 "created_at": row[4]
             }
+            return message
         return None
     
     def get_messages(self, session_id):
