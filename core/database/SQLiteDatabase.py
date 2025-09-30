@@ -17,6 +17,7 @@ class SQLiteDatabase(BaseDatabase):
             CREATE TABLE IF NOT EXISTS sessions (
                 id TEXT PRIMARY KEY,
                 name TEXT,
+                named INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -44,11 +45,17 @@ class SQLiteDatabase(BaseDatabase):
     
     def save_session(self, session):
         session_id = session.get("id", str(uuid.uuid4()))
+        print(f"SESSION IN DB FUNC:\n{session}")
         self.cursor.execute('''
-            INSERT OR REPLACE INTO sessions (id, name, updated_at)
-            VALUES (?, ?, CURRENT_TIMESTAMP)
+            INSERT INTO sessions (id, name, named, updated_at)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT (id) DO UPDATE SET
+                id = excluded.id,
+                name = excluded.name,
+                named = excluded.named,
+                updated_at = CURRENT_TIMESTAMP
             RETURNING *
-        ''', (session_id, session["name"])
+        ''', (session_id, session["name"], session["named"])
         )
         row = self.cursor.fetchone()
         self.conn.commit()
@@ -64,20 +71,21 @@ class SQLiteDatabase(BaseDatabase):
     
     def get_all_sessions(self):
         self.cursor.execute('''
-            SELECT id, name, created_at FROM sessions
+            SELECT id, name, named, created_at FROM sessions
             ORDER BY created_at DESC
         ''')
         rows = self.cursor.fetchall()
         sessions = [{
             "id": session[0],
             "name": session[1],
-            "created_at": session[2]
+            "named": session[2],
+            "created_at": session[3]
         } for session in rows]
         return sessions
 
     def get_session(self, session_id):
         self.cursor.execute('''
-            SELECT id, name, created_at FROM sessions
+            SELECT id, name, named, created_at FROM sessions
             WHERE id = ?
         ''', (session_id,))
         row = self.cursor.fetchone()
@@ -85,7 +93,8 @@ class SQLiteDatabase(BaseDatabase):
             return {
                 "id": row[0],
                 "name": row[1],
-                "created_at": row[2]
+                "named": row[2],
+                "created_at": row[3]
             }
         return None
     
