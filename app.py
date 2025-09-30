@@ -113,7 +113,8 @@ def handle_new_chat_click(db, pipeline):
     logger.debug(f"Done")
 
 
-def handle_session_click(db, session):
+def handle_session_click(db, pipeline, session):
+    generate_summary(db, pipeline, force=True)
     logger.debug(f"Fetching session {session["name"]} with id: {session["id"]}")
     new_session = get_session_from_db(db, session["id"])
     messages = get_messages_for_session_from_db(db, session["id"])
@@ -237,7 +238,7 @@ def main():
     sidebar = Sidebar(
         sessions=st.session_state["sessions"],
         handle_new_chat_click=lambda: handle_new_chat_click(db, st.session_state["pipeline"]),
-        handle_session_click=lambda s: handle_session_click(db, s),
+        handle_session_click=lambda s: handle_session_click(db, st.session_state["pipeline"], s),
         handle_clear_chat_click=lambda: handle_clear_chat_click(db, st.session_state["current_session"]["id"])
     )
     sidebar.render()
