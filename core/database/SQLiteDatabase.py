@@ -145,6 +145,10 @@ class SQLiteDatabase(BaseDatabase):
         self.cursor.execute('''
             INSERT INTO summaries (id, session_id, summary)
             VALUES (?, ?, ?)
+            ON CONFLICT (id) DO UPDATE SET
+                session_id = excluded.session_id,
+                summary = excluded.summary,
+                updated_at = CURRENT_TIMESTAMP
             RETURNING *
         ''', (summary_id, session_id, summary["text"]))
         row = self.cursor.fetchone()
