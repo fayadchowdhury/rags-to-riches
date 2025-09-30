@@ -23,7 +23,6 @@ class ChatMessage:
                 full_text += token
                 placeholder.markdown(full_text)
             if sources:
-                print(sources)
                 for source in sources:
                     Source(source).render()
         return full_text
