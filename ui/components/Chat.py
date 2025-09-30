@@ -10,7 +10,7 @@ class Chat:
         pass
 
     def render(self):
-        st.markdown(f"## Chat Session: {self.session['name']}")
+        st.markdown(f"## {self.session['name']}")
     
         for message in self.session.get("messages", []):
             ChatMessage(message).render()
