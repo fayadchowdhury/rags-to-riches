@@ -80,9 +80,9 @@ def handle_prompt_submit(db, pipeline, prompt: str):
     ]
 
     prompt_template = "{query}:\n\n{context}:\n\n"
-    response_stream = pipeline.query(prompt_template, prompt, summary)
+    sources, response_stream = pipeline.query(prompt_template, prompt, summary)
     logger.debug(f"Sending query and summary to LLM to stream response:\n\nQuery:\n{query}\n\nSummary:\n{summary}")
-    response = ChatMessage.render_stream(response_stream)
+    response = ChatMessage.render_stream(response_stream, sources)
 
     reply = {"role": "assistant", "content": response}
     logger.debug(f"Done streaming response:\n{reply}")

@@ -13,9 +13,16 @@ class UIPipeline(BasePipeline):
         return super().ingest_objects_from_directory(directory)
     
     def query(self, prompt_template, query, history):
-        context = self.retriever.retrieve(query)
+        context_names, context = self.retriever.retrieve(query)
         query_with_context_injected = prompt_template.format(query=query, context=context)
-        return self.generator.generate_stream(history, query_with_context_injected)
+        context = [
+            {
+                "title": title,
+                "content": content
+            }
+            for title, content in zip(context_names, context)
+        ]
+        return context, self.generator.generate_stream(history, query_with_context_injected)
     
     def update_component(self, component_name: str, new_component: Any):
         '''
