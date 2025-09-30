@@ -15,6 +15,9 @@ from core.utils.logging_utils import setup_logger
 
 logger = setup_logger("app", "logs", logging.DEBUG)
 
+def generate_session_title(pipeline, message):
+    return pipeline.generate_title(message)
+
 
 def generate_summary(db, pipeline, force=False):
     # Check to see if summary exists
@@ -209,6 +212,18 @@ def main():
             if not messages:
                 logger.debug(f"No messages found for current_session, initializing to empty list")
                 messages = []
+            else:
+                if not session.get("named", 0):
+                    session_name = generate_session_title(st.session_state["pipeline"], messages[0])
+                    logger.debug(f"Generated title for chat: {session_name}")
+                    session["name"] = session_name
+                    session["named"] = 1
+                    session = save_session_to_db(db, session)
+                    logger.debug(f"Updated session in db")
+                    st.session_state["current_session"]["name"] = session_name
+                    st.session_state["current_session"]["named"] = 1
+                    st.session_state["sessions"][0]["name"] = session_name
+                    st.session_state["sessions"][0]["named"] = 1
             logger.debug(f"Loaded {len(messages)} messages for current_session")
             st.session_state["current_session"]["messages"] = messages
             st.session_state["messages_loaded"] = True
