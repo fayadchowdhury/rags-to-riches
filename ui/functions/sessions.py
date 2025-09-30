@@ -14,6 +14,7 @@ def get_sessions_from_db(db: BaseDatabase):
 def create_new_session(name: str):
     return {
         "name": name,
+        "named": 0,
         "messages": []
     }
 
