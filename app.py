@@ -1,221 +1,242 @@
 import streamlit as st
-from openai import OpenAI
-import pinecone
-from typing import List, Dict
 import logging
-from dotenv import load_dotenv
-import os
-import time
+from datetime import datetime
 
-load_dotenv()
+from ui.components.Sidebar import Sidebar
+from ui.components.Chat import Chat
+from ui.components.ChatMessage import ChatMessage
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
-PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
-PINECONE_INDEX_NAME = os.environ["PINECONE_INDEX_NAME"]  
+from ui.functions.messages import get_messages_for_session_from_db, save_message_for_session_to_db, delete_messages_for_session_from_db
+from ui.functions.sessions import get_session_from_db, get_sessions_from_db, create_new_session, save_session_to_db, get_chat_history, save_summary_to_db, get_summary_from_db
+from ui.functions.pipeline import setup_pipeline
 
-class RAGSystem:
-    def __init__(self):
-        """Initialize the RAG system with hardcoded API keys and configurations."""
-        try:
-            logger.info("Initializing OpenAI client...")
-            self.openai_client = OpenAI(api_key=OPENAI_API_KEY)
-            
-            logger.info("Initializing Pinecone client...")
-            self.pinecone_client = pinecone.Pinecone(api_key=PINECONE_API_KEY)
-            
-            # List available indexes for debugging
-            indexes = self.pinecone_client.list_indexes()
-            logger.info(f"Available Pinecone indexes: {[index.name for index in indexes]}")
-            
-            logger.info(f"Attempting to connect to index: {PINECONE_INDEX_NAME}")
-            self.index = self.pinecone_client.Index(PINECONE_INDEX_NAME)
-            
-            # Test index connection with a simple query
-            logger.info("Testing index connection...")
-            test_vector = [0.0] * 1536  # Standard dimension for OpenAI embeddings
-            self.index.query(vector=test_vector, top_k=1)
-            logger.info("Successfully connected to Pinecone index")
-            
-            self.embedding_model = "text-embedding-ada-002"
-            self.chat_model = "gpt-3.5-turbo"
-            
-        except Exception as e:
-            logger.error(f"Error during initialization: {str(e)}", exc_info=True)
-            raise
+from core.utils.app_utils import initialize_database, get_app_env_config
+from core.utils.logging_utils import setup_logger
 
-    def create_embedding(self, text: str) -> List[float]:
-        """Create embeddings for input text using OpenAI's API."""
-        try:
-            logger.debug(f"Creating embedding for text: {text[:100]}...")
-            response = self.openai_client.embeddings.create(
-                model=self.embedding_model,
-                input=text
-            )
-            logger.debug("Successfully created embedding")
-            return response.data[0].embedding
-        except Exception as e:
-            logger.error(f"Error creating embedding: {str(e)}", exc_info=True)
-            raise
+logger = setup_logger("app", "logs", logging.DEBUG)
 
-    def retrieve_from_pinecone(self, query: str, top_k: int = 3) -> List[Dict[str, str]]:
-        """Retrieve relevant information from Pinecone index."""
-        try:
-            logger.debug(f"Creating embedding for query: {query}")
-            query_embedding = self.create_embedding(query)
-            
-            logger.debug("Querying Pinecone index...")
-            results = self.index.query(
-                vector=query_embedding,
-                top_k=top_k,
-                include_metadata=True,
-                include_values=False
-            )
-            
-            source_knowledge = []
-            for match in results.matches:
-                source_info = {
-                    'source': match.metadata.get('file_name', 'Unknown'),
-                    'context': match.metadata.get('first_10_tokens', 'No context available'),
-                    'text': match.metadata.get('text', 'No text available'),
-                    'id': match.get('id', 'No ID available'),
-                    'score': f"{match.score:.4f}"
-                }
-                source_knowledge.append(source_info)
-            
-            logger.debug(f"Retrieved {len(source_knowledge)} results from Pinecone")
-            return source_knowledge
-            
-        except Exception as e:
-            logger.error(f"Error in retrieve_from_pinecone: {str(e)}", exc_info=True)
-            raise
 
-    def generate_augmented_prompt(self, query: str, source_knowledge: List[Dict[str, str]]) -> str:
-        """Generate an augmented prompt using retrieved context."""
-        sources_text = "\n\n".join([
-            f"Source: {source['source']}\nContext: {source['context']}"
-            for source in source_knowledge
-        ])
-        
-        augmented_prompt = f"""
-            You are an NLP expert. Based on the query provided and the relevant context retrieved from the knowledge base, provide:
-            1. A direct answer that addresses the specific query
-            2. If present, give evidence/examples from the relevant benchmark mentioned in the query
-            3. If needed, Technical explanation of the scoring criteria as shown in the course materials
-            4. References to any specific datasets or metrics mentioned in the retrieved lecture content
+def generate_summary(db, pipeline, force=False):
+    # Check to see if summary exists
+    logger.debug(f"Checking to see if summary exists for session: {st.session_state["current_session"]["id"]}")
+    summary_text = ""
+    summary_from_db = get_summary_from_db(db, st.session_state["current_session"]["id"])
+    history = get_chat_history(st.session_state["current_session"]["messages"], token_limit=10000)
+    if summary_from_db:
+        logger.debug(f"Summary found:\n {summary_from_db}")
+        summary_text = summary_from_db["summary"]
+    else:
+        logger.debug(f"Summary not found, generating summary from history")
+        summary_text = pipeline.summarize_session(history)
+        logger.debug(f"Generated summary from history: {summary_text}")
+        summary_for_db = {
+            "text": summary_text
+        }
+        summary_from_db = save_summary_to_db(db, st.session_state["current_session"]["id"], summary_for_db)
+        logger.debug(f"Saved summary to db")
 
-            If the provided information is insufficient to answer the query, state this clearly and explain what additional information would be needed.
-
-            Relevant Course Materials:
-            {sources_text}
-
-            Query: {query}
-
-            Answer:
-        """
-        
-        return augmented_prompt
-
-    def get_response(self, query: str) -> tuple[str, List[Dict[str, str]]]:
-        """Get a response from the LLM using the augmented prompt."""
-        try:
-            # First retrieve relevant sources
-            source_knowledge = self.retrieve_from_pinecone(query)
-            
-            # Generate the prompt with the sources
-            prompt = self.generate_augmented_prompt(query, source_knowledge)
-            
-            # Get the response from OpenAI
-            response = self.openai_client.chat.completions.create(
-                model=self.chat_model,
-                messages=[
-                    {"role": "system", "content": "You are an expert NLP teaching assistant."},
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            
-            return response.choices[0].message.content, source_knowledge
-            
-        except Exception as e:
-            logger.error(f"Error getting response: {str(e)}")
-            raise
-
-def initialize_rag_system():
-    """Initialize the RAG system if not already in session state."""
-    if 'rag_system' not in st.session_state:
-        try:
-            logger.info("Creating new RAG system instance...")
-            st.session_state.rag_system = RAGSystem()
-            logger.info("RAG system initialized successfully")
-            return True
-        except Exception as e:
-            logger.error(f"Error initializing RAG system: {str(e)}", exc_info=True)
-            st.error(f"""
-                Error initializing RAG system. Debug information:
-                - Available indexes: {[index.name for index in pinecone.Pinecone(api_key=PINECONE_API_KEY).list_indexes()]}
-                - Attempted index name: {PINECONE_INDEX_NAME}
-                - Error message: {str(e)}
-                
-                Please check:
-                1. API keys are correct
-                2. Index name matches exactly
-                3. Index permissions are properly set
-            """)
-            return False
-    return True
-
-def main():
-    st.set_page_config(page_title="NLP Course Assistant", page_icon="🎓", layout="wide")
-    load_dotenv()
-
-    # Page header
-    st.title("🎓 NLP Course Assistant")
-    st.markdown("""
-        Ask questions about NLP concepts, benchmarks, and course materials.
-        The assistant will provide answers based on the course content and relevant sources.
-    """)
-    
-    # Initialize RAG system
-    if not initialize_rag_system():
-        return
-    
-    if "messages" not in st.session_state:
-        st.session_state["messages"] = []
-
-    for message in st.session_state["messages"]:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-    if prompt := st.chat_input("What is up?"):
-        st.session_state["messages"].append(
+    # Check to see whether summary is stale or not based on number of messages from last update
+    logger.debug(f"Summary last updated in db at: {summary_from_db["updated_at"]}")
+    messages_since_last_update = [h for h in history if h["created_at"] > summary_from_db["updated_at"]]
+    logger.debug(f"Accumulated {len(messages_since_last_update)} messages since last update to summary")
+    if force or len(messages_since_last_update) > 100:
+        logger.debug(f"Generating new summary")
+        history = [
             {
                 "role": "user",
-                "content": prompt
+                "content": summary_from_db["summary"]
             }
-        )
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        
-        with st.spinner("Getting response"):
-            try:
-                response, sources = st.session_state.rag_system.get_response(prompt)
-                with st.chat_message("assistant"):
-                    st.markdown(response)
-                    if sources:
-                        with st.expander("Sources"):
-                            for source in sources:
-                                st.markdown(f"- ID: {source['id']}, File: {source["source"]}: \"...{source["text"]}...\"")
+        ] + [
+            {
+                "role": m["role"],
+                "content": m["content"]
+            }
+            for m in messages_since_last_update
+        ]
+        summary_text = pipeline.summarize_session(history)
+        logger.debug(f"Generated summary from history: {summary_text}")
+        summary_for_db = summary_from_db
+        summary_for_db["text"] = summary_text
+        summary_from_db = save_summary_to_db(db, st.session_state["current_session"]["id"], summary_for_db)
+        logger.debug(f"Saved summary to db")
 
-                
-                st.session_state["messages"].append(
-                    {
-                        "role": "assistant",
-                        "content": response
-                    }
-                )
-            except Exception as e:
-                st.error(f"An error occurred: {str(e)}")
+    return summary_text
+
+
+def handle_prompt_submit(db, pipeline, prompt: str):
+    query = {"role": "user", "content": prompt}
+    logger.debug(f"Saving to db user query:\n{query}")
+    query_to_db = save_message_for_session_to_db(db, st.session_state["current_session"]["id"], query)
+    st.session_state["current_session"]["messages"].append(query_to_db)
+    logger.debug(f"Saved query to db for session id: {st.session_state['current_session']['id']}")
+
+    summary_text = generate_summary(db, pipeline)
+    
+    summary = [
+        {
+            "role": "user",
+            "content": summary_text
+        }
+    ]
+
+    prompt_template = "{query}:\n\n{context}:\n\n"
+    response_stream = pipeline.query(prompt_template, prompt, summary)
+    logger.debug(f"Sending query and summary to LLM to stream response:\n\nQuery:\n{query}\n\nSummary:\n{summary}")
+    response = ChatMessage.render_stream(response_stream)
+
+    reply = {"role": "assistant", "content": response}
+    logger.debug(f"Done streaming response:\n{reply}")
+    reply_to_db = save_message_for_session_to_db(db, st.session_state["current_session"]["id"], reply)
+    st.session_state["current_session"]["messages"].append(reply_to_db)
+
+    logger.debug(f"Saved response to db for session id: {st.session_state['current_session']['id']}")
+
+
+def handle_new_chat_click(db, pipeline):
+    generate_summary(db, pipeline, force=True)
+    logger.debug(f"Creating new session")
+    new_session = create_new_session(f"Session @ {datetime.now().strftime("%H:%M:%S-%d-%m-%Y")}") # Need to figure this out somehow, maybe update with summary of first query??
+    session = save_session_to_db(db, new_session)
+    logger.debug(f"Saved new session to db with id: {session["id"]}")
+    messages = get_messages_for_session_from_db(db, session["id"])
+    
+    new_session["id"] = session["id"]
+    new_session["messages"] = messages
+
+    logger.debug(f"Placing new session into 0th at session_state sessions and setting current_session to new session and setting messages to retrieved messages")
+    st.session_state["sessions"].insert(0, new_session)
+    st.session_state["current_session"] = new_session
+    st.session_state["messages"] = messages
+    logger.debug(f"Done")
+
+
+def handle_session_click(db, session):
+    logger.debug(f"Fetching session {session["name"]} with id: {session["id"]}")
+    new_session = get_session_from_db(db, session["id"])
+    messages = get_messages_for_session_from_db(db, session["id"])
+    
+    new_session["messages"] = messages
+    logger.debug(f"Fetched {len(messages)} messages for session from db")
+
+    logger.debug(f"Placing {new_session["name"]} into 0th at session_state sessions and setting current_session to {new_session["name"]} and setting messages to retrieved messages")
+    st.session_state["sessions"] = [x for x in st.session_state["sessions"] if x["id"] != new_session["id"]]
+    st.session_state["sessions"].insert(0, new_session)
+    st.session_state["current_session"] = new_session
+    st.session_state["messages"] = messages
+    logger.debug(f"Done")
+
+
+def handle_clear_chat_click(db, session_id):
+    logger.debug(f"Deleting all messages in chat from database")
+    delete_messages_for_session_from_db(db, session_id)
+    logger.debug(f"Deleted messages")
+    messages = get_messages_for_session_from_db(db, session_id)
+    logger.debug(f"Fetched {len(messages)} messages for session from db")
+    logger.debug(f"Updating session_state current_session and messages")
+    st.session_state["current_session"]["messages"] = messages
+    st.session_state["messages"] = messages
+
+
+# Main flow
+def main():
+    logger.debug(f"Starting main function with session_state: {st.session_state}")
+    
+    # Read app environment variables 
+    app_config = get_app_env_config(".env")
+    app_config["db_type"] = "SQLiteDatabase"
+    logger.debug(f"App config: {app_config}")
+
+    # Initialize pipeline
+    if not "pipeline" in st.session_state:
+        logger.debug(f"No pipeline found; initializing and saving to session_state")
+        pipeline = setup_pipeline(app_config, "config")
+        st.session_state["pipeline"] = pipeline
+    else:
+        logger.debug(f"Using pipeline with:\n{st.session_state["pipeline"].list_components()}")
+
+    # Initialize db and create tables
+    db = initialize_database(app_config)
+    db._create_tables()
+    logger.debug(f"Initialized database")
+
+    # Set up UI metadata
+    st.set_page_config(
+        page_title="NLP Course Assistant",
+        page_icon="🤖",
+        layout="wide",
+    )
+    st.title("NLP Course Assistant 🤖")
+    logger.debug(f"Set up Streamlit page config")
+    
+    # Check to see if sessions exist in session_state
+    # Get from db if not
+    logger.debug(f"Checking for 'sessions' in session_state")
+    if "sessions" not in st.session_state:
+        logger.debug(f"'sessions' not found in session_state, fetching from db")
+        st.session_state["sessions"] = get_sessions_from_db(db)
+        logger.debug(f"Fetched {len(st.session_state['sessions'])} sessions from db")
+
+    # Start at most recent session if found in db
+    # Or create a temporary session
+    logger.debug(f"Checking for 'current_session' in session_state")
+    if "current_session" not in st.session_state:
+        logger.debug(f"'current_session' not found in session_state")
+        if st.session_state["sessions"] and len(st.session_state["sessions"]) > 0:
+            logger.debug(f"Setting current_session to most recent")
+            st.session_state["current_session"] = st.session_state["sessions"][0]
+        else:
+            logger.debug(f"No sessions found in db, creating temporary session")
+            st.session_state["current_session"] = create_new_session("Temporary session")
+            st.session_state["sessions"].insert(0, st.session_state["current_session"])
+            logger.debug(f"Inserted temporary session into sessions list")
+        
+        logger.debug(f"Current session set to: {st.session_state['current_session']}")
+        
+        # Save current session to db and update id in current_session
+        session = save_session_to_db(db, st.session_state["current_session"])
+        logger.debug(f"Saved current_session to db with id: {session["id"]}")
+        st.session_state["current_session"]["id"] = session["id"]
+        st.session_state["sessions"][0]["id"] = session["id"]
+        logger.debug(f"Updated current_session and sessions[0] in session_state with id: {st.session_state['current_session']['id']}")
+        
+
+        # Initialize messages in session state
+        # Replace with actual messages fetched from store
+        # If no messages, initialize to empty list
+        if "messages_loaded" not in st.session_state:
+            logger.debug(f"Loading messages for current_session from db")
+            messages = get_messages_for_session_from_db(db, session_id=st.session_state["current_session"].get("id", None))
+            if not messages:
+                logger.debug(f"No messages found for current_session, initializing to empty list")
+                messages = []
+            logger.debug(f"Loaded {len(messages)} messages for current_session")
+            st.session_state["current_session"]["messages"] = messages
+            st.session_state["messages_loaded"] = True
+
+        # Update summary
+        logger.debug(f"Generating summary at start-up")
+        generate_summary(db, st.session_state["pipeline"])
+
+    # Render sidebar component (new chat button, session buttons, clear chat button)
+    logger.debug(f"Rendering Sidebar component with sessions: {st.session_state['sessions']}")
+    sidebar = Sidebar(
+        sessions=st.session_state["sessions"],
+        handle_new_chat_click=lambda: handle_new_chat_click(db, st.session_state["pipeline"]),
+        handle_session_click=lambda s: handle_session_click(db, s),
+        handle_clear_chat_click=lambda: handle_clear_chat_click(db, st.session_state["current_session"]["id"])
+    )
+    sidebar.render()
+
+    # Render chat component (title, messages, input)
+    logger.debug(f"Rendering Chat component with session: {st.session_state['current_session']}")
+    chat = Chat(
+        session=st.session_state["current_session"],
+        handle_prompt_submit=lambda prompt: handle_prompt_submit(db, st.session_state["pipeline"], prompt)
+    )
+    chat.render()
+    
+    # Think of more elegant way to close connection if at all required
+    # db.close()
 
 if __name__ == "__main__":
     main()
