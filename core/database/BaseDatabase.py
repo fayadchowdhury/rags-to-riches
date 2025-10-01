@@ -16,9 +16,10 @@ class BaseDatabase(ABC):
         pass
 
     @abstractmethod
-    def save_session(self, session: Dict):
+    def save_session(self, session: Dict) -> Dict:
         '''
-        Save a chat session with its metadata in the database
+        Take a session object and save it to the database
+        Return saved session as a dictionary
         '''
         pass
 
@@ -26,55 +27,61 @@ class BaseDatabase(ABC):
     def get_all_sessions(self) -> List[Dict]:
         '''
         Retrieve all chat sessions from the database
+        Return a list of dictionary objects of each session
         '''
         pass
 
     @abstractmethod
     def get_session(self, session_id: str) -> Dict:
         '''
-        Retrieve a chat session by its ID
+        Take a session ID string and retrieve a chat session by its ID
+        Return session as a dictionary
         '''
         pass
     
     @abstractmethod
     def delete_session(self, session_id: str):
         '''
-        Delete a chat session by its ID
+        Take a session ID string and delete a chat session by its ID
         '''
         pass
 
     @abstractmethod
-    def save_message(self, session_id: str, message: Dict):
+    def save_message(self, session_id: str, message: Dict) -> Dict:
         '''
-        Save a message in a chat session
+        Take a session ID string and a message dictionary object and save it to the chat session in the database
+        Return saved message as a dictionary
         '''
         pass
 
     @abstractmethod
     def get_messages(self, session_id: str) -> List[Dict]:
         '''
-        Retrieve all messages for a chat session
+        Take a session ID string and retrieve all messages for a chat session by ID
+        Return a list of dictionary objects of each message
         '''
         pass
 
     @abstractmethod
     def delete_messages(self, session_id: str):
         '''
-        Delete all messages for a chat session
+        Take a session ID string and delete that session from the database
         '''
         pass
 
     @abstractmethod
-    def save_summary(self, session_id: str, summary: Dict):
+    def save_summary(self, session_id: str, summary: Dict) -> Dict:
         '''
-        Save summmary of a chat session
+        Take a session ID string and a summary object and save it to the chat session in the database
+        Return saved summary as a dictionary
         '''
         pass
 
     @abstractmethod
     def get_summary(self, session_id: str) -> Dict:
         '''
-        Retrieve summary of a chat session
+        Take a session ID string and retrieve summary of a chat session
+        Return summary as a dictionary
         '''
         pass
 
