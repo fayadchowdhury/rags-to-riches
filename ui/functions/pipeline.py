@@ -13,6 +13,10 @@ from core.utils.pipeline_utils import (
 from core.pipelines.UIPipeline import UIPipeline
 
 def setup_pipeline(app_config: Dict, config_path: str) -> UIPipeline:
+    '''
+    Take an app config dictionary and a YAML config filepath string to initialize a UI pipeline object
+    Return a UI pipeline object
+    '''
     
     # Read configs
     configs_base_dir = f"{config_path}/"
