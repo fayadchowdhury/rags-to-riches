@@ -26,14 +26,13 @@ class UIPipeline(BasePipeline):
     
     def update_component(self, component_name: str, new_component: Any):
         '''
-        Replace a component in the pipeline from the UI at runtime
-        Takes a compoennt name and the new component to replace it with
+        Takes a compoennt name string and the new component to replace it with
         '''
         setattr(self, component_name, new_component)
 
     def list_components(self) -> Dict:
         '''
-        List current components in pipeline
+        Return a dictionary of current components in pipeline
         '''
         return {
             "parsers": self.parsers,
@@ -46,15 +45,14 @@ class UIPipeline(BasePipeline):
     
     def reset(self, **new_config):
         '''
-        Reset pipeline to a new config
-        Takes a config dictionary
+        Takes a config dictionary to reset pipeline to
         '''
         self.config.update(new_config)
 
-    def summarize_session(self, messages: List[Dict]) -> Dict:
+    def summarize_session(self, messages: List[Dict]) -> str:
         '''
-        Take a list of messages
-        Return a summary
+        Takes a list of messages and generates summary
+        Returns summary as a string
         '''
         query = ""
         for message in messages:
@@ -63,7 +61,11 @@ class UIPipeline(BasePipeline):
         query += "Summarize the conversation thus far in less than 300 words, keeping track of what the user said and what the assistant responded with"
         return self.generator.generate(query, "")
     
-    def generate_title(self, prompt: str) -> Dict:
+    def generate_title(self, prompt: str) -> str:
+        '''
+        Takes an input prompt to base the title of the session on
+        Returns title as a string
+        '''
         query = """
             Make a 5 word long title for the chat based on this first prompt.
 

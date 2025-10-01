@@ -50,6 +50,6 @@ class BasePipeline(ABC):
     def query(self, prompt_template: str, query: str) -> str:
         '''
         Take a query string
-        Return the output string
+        Return the context and output string
         '''
         pass
