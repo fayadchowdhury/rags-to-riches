@@ -15,11 +15,19 @@ from core.utils.logging_utils import setup_logger
 
 logger = setup_logger("app", "logs", logging.DEBUG)
 
-def generate_session_title(pipeline, message):
+def generate_session_title(pipeline, message: str) -> str:
+    '''
+    Take pipeline object and message string for session title
+    Return title as a string
+    '''
     return pipeline.generate_title(message)
 
 
-def generate_summary(db, pipeline, force=False):
+def generate_summary(db, pipeline, force=False) -> str:
+    '''
+    Take db object, pipeline object and a force boolean (True will force summary generation) to check database and generate a summary as required
+    Return summary as a string
+    '''
     # Check to see if summary exists
     logger.debug(f"Checking to see if summary exists for session: {st.session_state["current_session"]["id"]}")
     summary_text = ""
@@ -67,6 +75,9 @@ def generate_summary(db, pipeline, force=False):
 
 
 def handle_prompt_submit(db, pipeline, prompt: str):
+    '''
+    Take db object, pipeline object and a prompt string to pass to save to session messages and pass to LLM for response which is rendered as a stream
+    '''
     query = {"role": "user", "content": prompt}
     logger.debug(f"Saving to db user query:\n{query}")
     query_to_db = save_message_for_session_to_db(db, st.session_state["current_session"]["id"], query)
@@ -96,6 +107,9 @@ def handle_prompt_submit(db, pipeline, prompt: str):
 
 
 def handle_new_chat_click(db, pipeline):
+    '''
+    Take db object and pipeline object to summarize current session, create a new session and store everything to the database and set to current_session
+    '''
     generate_summary(db, pipeline, force=True)
     logger.debug(f"Creating new session")
     new_session = create_new_session(f"Session @ {datetime.now().strftime("%H:%M:%S-%d-%m-%Y")}") # Need to figure this out somehow, maybe update with summary of first query??
@@ -114,6 +128,9 @@ def handle_new_chat_click(db, pipeline):
 
 
 def handle_session_click(db, pipeline, session):
+    '''
+    Take db object, pipeline object and session object to switch between sessions and update current_session
+    '''
     generate_summary(db, pipeline, force=True)
     logger.debug(f"Fetching session {session["name"]} with id: {session["id"]}")
     new_session = get_session_from_db(db, session["id"])
