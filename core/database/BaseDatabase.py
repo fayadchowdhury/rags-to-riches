@@ -65,7 +65,7 @@ class BaseDatabase(ABC):
     @abstractmethod
     def delete_messages(self, session_id: str):
         '''
-        Take a session ID string and delete that session from the database
+        Take a session ID string and delete messages for that session from the database
         '''
         pass
 
