@@ -23,6 +23,7 @@ class BaseGenerator(ABC):
     @abstractmethod
     def generate_stream(self, query: str) -> Iterator[str]:
         '''
-        Take a query to pass to LLM 
+        Take a query to pass to LLM
+        Return stream response as an iterator over a string
         '''
         pass
