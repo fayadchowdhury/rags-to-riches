@@ -45,7 +45,6 @@ class SQLiteDatabase(BaseDatabase):
     
     def save_session(self, session):
         session_id = session.get("id", str(uuid.uuid4()))
-        print(f"SESSION IN DB FUNC:\n{session}")
         self.cursor.execute('''
             INSERT INTO sessions (id, name, named, updated_at)
             VALUES (?, ?, ?, CURRENT_TIMESTAMP)
