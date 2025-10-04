@@ -9,11 +9,12 @@ from ui.components.ChatMessage import ChatMessage
 from ui.functions.messages import get_messages_for_session_from_db, save_message_for_session_to_db, delete_messages_for_session_from_db
 from ui.functions.sessions import get_session_from_db, get_sessions_from_db, create_new_session, save_session_to_db, get_chat_history, save_summary_to_db, get_summary_from_db
 from ui.functions.pipeline import setup_pipeline
+from ui.functions.files import create_temp_file
 
 from core.utils.app_utils import initialize_database, get_app_env_config
 from core.utils.logging_utils import setup_logger
 
-logger = setup_logger("app", "logs", logging.DEBUG)
+logger = setup_logger("app", "logs", logging.ERROR)
 
 def generate_session_title(pipeline, message: str) -> str:
     '''
@@ -158,6 +159,11 @@ def handle_clear_chat_click(db, session_id):
     st.session_state["messages"] = messages
 
 
+def handle_file_upload(pipeline, files):
+    for file in files:
+        with create_temp_file(file) as file_path:
+            pipeline.ingest_object(file_path)
+
 # Main flow
 def main():
     logger.debug(f"Starting main function with session_state: {st.session_state}")
@@ -264,7 +270,8 @@ def main():
     logger.debug(f"Rendering Chat component with session: {st.session_state['current_session']}")
     chat = Chat(
         session=st.session_state["current_session"],
-        handle_prompt_submit=lambda prompt: handle_prompt_submit(db, st.session_state["pipeline"], prompt)
+        handle_prompt_submit=lambda prompt: handle_prompt_submit(db, st.session_state["pipeline"], prompt),
+        handle_file_upload=lambda files: handle_file_upload(st.session_state["pipeline"], files)
     )
     chat.render()
     

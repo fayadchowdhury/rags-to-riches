@@ -4,7 +4,7 @@ import streamlit as st
 from ui.components.ChatMessage import ChatMessage
 
 class Chat:
-    def __init__(self, session: Dict, handle_prompt_submit: Callable):
+    def __init__(self, session: Dict, handle_prompt_submit: Callable, handle_file_upload: Callable):
         '''
         Initialize a Chat UI object with
         - session
@@ -12,6 +12,7 @@ class Chat:
         '''
         self.session = session
         self.handle_prompt_submit = handle_prompt_submit
+        self.handle_file_upload = handle_file_upload
         pass
 
     def render(self):
@@ -26,8 +27,9 @@ class Chat:
         for message in self.session.get("messages", []):
             ChatMessage(message).render()
 
-        if user_input := st.chat_input("Type your message here..."):
+        if user_input := st.chat_input("Type your message here and/or attach a file...", accept_file="multiple", file_type=["pdf", "csv", "html", "ipynb"]):
             with st.chat_message("user"):
-                st.markdown(user_input)
+                st.markdown(user_input["text"])
+                self.handle_file_upload(user_input["files"])
 
-            self.handle_prompt_submit(user_input)
+            self.handle_prompt_submit(user_input["text"])
