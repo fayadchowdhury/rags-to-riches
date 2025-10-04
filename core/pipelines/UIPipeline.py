@@ -1,13 +1,18 @@
 from typing import List, Dict, Any
 
 from core.pipelines.BasePipeline import BasePipeline
+from core.utils.pipeline_utils import parser_router
 
 class UIPipeline(BasePipeline):
     def __init__(self, parsers, chunker, embedder, vector_store, retriever, generator, **kwargs):
         super().__init__(parsers, chunker, embedder, vector_store, retriever, generator, **kwargs)
 
     def ingest_object(self, obj):
-        return super().ingest_object(obj)
+        parser = parser_router(self.parsers, obj)
+        parsed_document = parser.parse(obj)
+        chunks = self.chunker.chunk(parsed_document)
+        embeddings = self.embedder.embed_data(chunks)
+        self.vector_store.store_batch(embeddings, batch_size=10)
     
     def ingest_objects_from_directory(self, directory):
         return super().ingest_objects_from_directory(directory)
