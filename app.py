@@ -93,9 +93,7 @@ def handle_prompt_submit(db, pipeline, prompt: str):
             "content": summary_text
         }
     ]
-
-    prompt_template = "{query}:\n\n{context}:\n\n"
-    sources, response_stream = pipeline.query(prompt_template, prompt, summary)
+    sources, response_stream = pipeline.query(prompt, summary)
     logger.debug(f"Sending query and summary to LLM to stream response:\n\nQuery:\n{query}\n\nSummary:\n{summary}")
     response = ChatMessage.render_stream(response_stream, sources)
 
@@ -149,6 +147,9 @@ def handle_session_click(db, pipeline, session):
 
 
 def handle_clear_chat_click(db, session_id):
+    '''
+    Take db object and session ID string and delete messages for current chat session
+    '''
     logger.debug(f"Deleting all messages in chat from database")
     delete_messages_for_session_from_db(db, session_id)
     logger.debug(f"Deleted messages")
@@ -160,8 +161,12 @@ def handle_clear_chat_click(db, session_id):
 
 
 def handle_file_upload(pipeline, files):
+    '''
+    Take db object and files uploaded in UI and ingest them
+    '''
     for file in files:
         with create_temp_file(file) as file_path:
+            logger.debug(f"Working on ingesting {file_path}")
             pipeline.ingest_object(file_path)
 
 # Main flow
@@ -238,7 +243,7 @@ def main():
                 messages = []
             else:
                 if not session.get("named", 0):
-                    session_name = generate_session_title(st.session_state["pipeline"], messages[0])
+                    session_name = generate_session_title(st.session_state["pipeline"], messages[0]["content"])
                     logger.debug(f"Generated title for chat: {session_name}")
                     session["name"] = session_name
                     session["named"] = 1
