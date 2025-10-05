@@ -26,6 +26,7 @@ def setup_pipeline(app_config: Dict, config_path: str) -> UIPipeline:
     vector_store_config = load_config_yaml(configs_base_dir, "vector_store")
     retriever_config = load_config_yaml(configs_base_dir, "retriever")
     generator_config = load_config_yaml(configs_base_dir, "generator")
+    app_extras_config = load_config_yaml(configs_base_dir, "app-extras")
 
     # Initialize all parsers
     all_parsers = initialize_all_parsers(parsers_config)
@@ -54,7 +55,8 @@ def setup_pipeline(app_config: Dict, config_path: str) -> UIPipeline:
         embedder=embedder,
         vector_store=vector_store,
         retriever=retriever,
-        generator=generator
+        generator=generator,
+        **app_extras_config
     )
 
     return pipeline

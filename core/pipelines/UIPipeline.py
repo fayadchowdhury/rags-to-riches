@@ -6,6 +6,9 @@ from core.utils.pipeline_utils import parser_router
 class UIPipeline(BasePipeline):
     def __init__(self, parsers, chunker, embedder, vector_store, retriever, generator, **kwargs):
         super().__init__(parsers, chunker, embedder, vector_store, retriever, generator, **kwargs)
+        self.summary_prompt_template = self.config["summary_prompt_template"]
+        self.title_prompt_template = self.config["title_prompt_template"]
+        self.query_prompt_template = self.config["query_prompt_template"]
 
     def ingest_object(self, obj):
         parser = parser_router(self.parsers, obj)
@@ -17,9 +20,9 @@ class UIPipeline(BasePipeline):
     def ingest_objects_from_directory(self, directory):
         return super().ingest_objects_from_directory(directory)
     
-    def query(self, prompt_template, query, history):
+    def query(self, query, history):
         context_names, context = self.retriever.retrieve(query)
-        query_with_context_injected = prompt_template.format(query=query, context=context)
+        query_with_context_injected = self.query_prompt_template.format(query=query, context=context)
         context = [
             {
                 "title": title,
@@ -63,7 +66,7 @@ class UIPipeline(BasePipeline):
         for message in messages:
             query += f"{message["role"]}: {message["content"]}\n\n"
 
-        query += "Summarize the conversation thus far in less than 300 words, keeping track of what the user said and what the assistant responded with"
+        query += self.summary_prompt_template
         return self.generator.generate(query, "")
     
     def generate_title(self, prompt: str) -> str:
@@ -71,11 +74,5 @@ class UIPipeline(BasePipeline):
         Takes an input prompt to base the title of the session on
         Returns title as a string
         '''
-        query = """
-            Make a 5 word long title for the chat based on this first prompt.
-
-            {prompt}
-
-            Return only the title, and nothing else.
-        """.format(prompt=prompt)
+        query = self.title_prompt_template + "\n\n" +  prompt
         return self.generator.generate(query, "")
