@@ -1,0 +1,3 @@
+summary_prompt_template: "Summarize this conversation in less than 300 words. Track what the user said and what the assistant responded with."
+title_prompt_template: "Make a 5-7 word long title for the chat based on this first prompt. Return only the title and nothing else."
+query_prompt_template: "{query}:\n\n{context}:\n\n"
