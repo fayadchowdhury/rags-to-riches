@@ -140,3 +140,69 @@ python3 streamlit run app.py
 ## Data
 
 The primary data were the CMPT-713 lecture PDFs, reference web pages, research papers, sample QAs and code as our source of LLM knowledge; these were the documents ingested into our RAG pipeline. The data is found in the data/input/full folder. Subsets of the data are also found in the data/input/subset and data/input/ones folders.
+
+## Setup and running
+
+Place the following in a .env file:
+
+- OPENAI_API_KEY=openai_api_key
+- PINECONE_API_KEY=pinecone_api_key
+- PINECONE_INDEX_NAME=pinecone_index_to_be_used_with_pinecone_vector_store
+- DB_DATABASE=sqlite_db_location (later versions will also work with other database systems)
+
+Install poetry and run
+
+```
+poetry install
+```
+
+It is also possible to extract the library requirements from the pyproject.toml file or the poetry-lock.toml file into a requirements.txt and then run
+
+```
+pip3 install -R requirements.txt
+```
+
+### Experiments
+
+First, create a folder in experiments/configs to reflect the name of the experiment (<experiment_name>) to house the config files.
+
+Create another folder with the same name in experiments/prompts to house the prompt templates.
+
+Run the experiment with:
+
+```
+poetry run python3 -m experiments.run_experiment <experiment_name>
+```
+
+The experiment_name must reflect the name of the folders created in the previous step
+
+To view the metrics in MLflow, run
+
+```
+poetry run mlflow ui
+```
+
+And navigate to the mlflow local server (usually http://127.0.0.1:5000) to view the experiment
+
+### App
+
+Edit the config files in config/ to reflect the configuration desired.
+
+Run
+
+```
+poetry run streamlit run app.py
+```
+
+There are delays where the app is processing things in the background
+
+## TODO
+
+- Make UI more informative, possibly via spinners to explain what the app is doing while input is blocked
+- Look into async programming for summaries and title generation
+- Implement a more generic CSV parser
+- Implement recursive chunking and a few other kinds of chunking strategies
+- Implement Weaviate, Milvus and a few other vector stores
+- Implement BM25 and agentic retrieval
+- Implement calls to Claude, ollama models etc.
+- Implement Postgres, MySQL and a few other kinds of app databases
