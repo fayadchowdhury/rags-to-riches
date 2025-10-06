@@ -1,4 +1,4 @@
-![Frontend](assets/featured-image.png)
+![Frontend](./assets/featured-image.png)
 
 Retrieval-Augmented Generation, or RAG, has led to leaps and bounds in improvements in the Natural Language Processing scene. This project explores the use of RAG systems in an academic setting. Leveraging course materials and research papers commonly discussed in graduate level NLP courses at a variety of educational institutions, the RAG system aids students’ understanding of NLP. At its core, the project is an exploration in the tasks of question answering and synthetic question generation.
 
