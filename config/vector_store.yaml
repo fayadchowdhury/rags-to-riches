@@ -1,4 +1,10 @@
-type: ChromaVectorStore
+# type: ChromaVectorStore
+# config:
+#   persist_directory: data/output/base-chroma
+#   collection_name: test-base
+
+type: PineconeVectorStore
 config:
-  persist_directory: data/output/base-chroma
-  collection_name: test-base
+  api_key: PINECONE_API_KEY
+  index_name: nlp-material-subset-base
+  embedding_dim: 1536
